@@ -1,16 +1,33 @@
 using System;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
     public static class GetMatchups
     {
-        [FunctionName("GetMatchups")]
-        public static void Run([TimerTrigger("0 0 0 * * *")]TimerInfo myTimer, ILogger log)
+        [Function("GetMatchups")]
+        public static void Run([TimerTrigger("0 0 0 * Jan,Sep-Dec Tue", RunOnStartup = true)] MyInfo myTimer, FunctionContext context)
         {
-            log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+            var logger = context.GetLogger("GetMatchups");
+            logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+            logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
         }
+    }
+
+    public class MyInfo
+    {
+        public MyScheduleStatus ScheduleStatus { get; set; }
+
+        public bool IsPastDue { get; set; }
+    }
+
+    public class MyScheduleStatus
+    {
+        public DateTime Last { get; set; }
+
+        public DateTime Next { get; set; }
+
+        public DateTime LastUpdated { get; set; }
     }
 }
