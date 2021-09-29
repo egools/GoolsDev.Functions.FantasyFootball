@@ -15,7 +15,7 @@ namespace GoolsDev.Functions.FantasyFootball
         }
 
         [Function("GetMatchups")]
-        public void Run([TimerTrigger("30 * * * * *")] FunctionContext context)
+        public void Run([TimerTrigger("%GetMatchupsTimerSchedule%")] FunctionContext context)
         {
             var logger = context.GetLogger("GetMatchups");
             logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
