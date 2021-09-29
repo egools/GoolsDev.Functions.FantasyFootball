@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball.Services
 {
-    public class GoogleSheetsService : IGoogleSheetsService
+    public partial class GoogleSheetsService : IGoogleSheetsService
     {
         private string _apiKey;
         private IFlurlClient _client;
@@ -20,7 +20,9 @@ namespace GoolsDev.Functions.FantasyFootball.Services
             IFlurlClientFactory factory)
         {
             _apiKey = options.Value.ApiKey;
-            _client = factory.Get($"{options.Value.BaseUrl}/{options.Value.SpreadsheeetId}");
+            _client = factory
+                .Get($"{options.Value.BaseUrl}/{options.Value.SpreadsheetId}")
+                .OnError(OnRequestFailure);
         }
 
         public async Task<IEnumerable<IEnumerable<string>>> GetRows(string sheetName, string startCell, string endCell)
@@ -32,6 +34,11 @@ namespace GoolsDev.Functions.FantasyFootball.Services
                 .GetJsonAsync<GoogleSheetsResult>();
 
             return result.Values;
+        }
+
+        private void OnRequestFailure(FlurlCall call)
+        {
+            var error = call.Response.GetJsonAsync<GoogleError>();
         }
     }
 }

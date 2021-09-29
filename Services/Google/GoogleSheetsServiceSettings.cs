@@ -4,7 +4,7 @@
     {
         public string BaseUrl { get; init; }
 
-        public string SpreadsheeetId { get; init; }
+        public string SpreadsheetId { get; init; }
 
         public string ApiKey { get; init; }
     }
