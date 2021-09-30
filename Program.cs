@@ -1,10 +1,9 @@
 using Flurl.Http.Configuration;
 using GoolsDev.Functions.FantasyFootball.Services;
-using Microsoft.Azure.Functions.Worker.Configuration;
+using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
 using System.Threading.Tasks;
 using YahooFantasyService;
 
@@ -28,10 +27,16 @@ namespace GoolsDev.Functions.FantasyFootball
                     {
                         configuration.GetSection("YahooServiceSettings").Bind(settings);
                     });
+                    s.AddOptions<BigTenGameDataServiceSettings>()
+                    .Configure<IConfiguration>((settings, configuration) =>
+                    {
+                        configuration.GetSection("GameData").Bind(settings);
+                    });
 
                     s.AddSingleton<IFlurlClientFactory, PerBaseUrlFlurlClientFactory>()
                     .AddSingleton<IYahooService, YahooService>()
-                    .AddSingleton<IGoogleSheetsService, GoogleSheetsService>();
+                    .AddSingleton<IGoogleSheetsService, GoogleSheetsService>()
+                    .AddSingleton<IBigTenGameDataService, BigTenGameDataService>();
                 })
                 .Build();
 
