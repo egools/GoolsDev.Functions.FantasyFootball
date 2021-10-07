@@ -1,6 +1,7 @@
 using Flurl.Http.Configuration;
 using GoolsDev.Functions.FantasyFootball.Services;
 using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
+using GoolsDev.Functions.FantasyFootball.Services.GitHub;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,10 +34,17 @@ namespace GoolsDev.Functions.FantasyFootball
                         configuration.GetSection("GameData").Bind(settings);
                     });
 
+                    s.AddOptions<GitHubCommitHandlerSettings>()
+                    .Configure<IConfiguration>((settings, configuration) =>
+                    {
+                        configuration.GetSection("GitHubSettings").Bind(settings);
+                    });
+
                     s.AddSingleton<IFlurlClientFactory, PerBaseUrlFlurlClientFactory>()
                     .AddSingleton<IYahooService, YahooService>()
                     .AddSingleton<IGoogleSheetsService, GoogleSheetsService>()
-                    .AddSingleton<IBigTenGameDataService, BigTenGameDataService>();
+                    .AddSingleton<IBigTenGameDataService, BigTenGameDataService>()
+                    .AddSingleton<IGitHubCommitHandler, GitHubCommitHandler>();
                 })
                 .Build();
 

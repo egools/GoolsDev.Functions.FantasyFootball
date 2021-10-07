@@ -19,7 +19,7 @@ namespace GoolsDev.Functions.FantasyFootball.Services.BigTenGameData
             _client = factory.Get($"{options.Value.BaseScoreboardUrl}");
         }
 
-        public async Task<IEnumerable<BigTenTeamData>> GetGameData(string week)
+        public async Task<BigTenGameDataDto> GetGameData(int week)
         {
             var result = await _client.Request().SetQueryParams(new
             {
@@ -27,29 +27,21 @@ namespace GoolsDev.Functions.FantasyFootball.Services.BigTenGameData
                 week = week
             }).GetJsonAsync<BigTenGameDataDto>();
 
-            var teamData = new List<BigTenTeamData>();
-            foreach (var game in result.Events)
+            return result;
+        }
+
+        public async Task<IEnumerable<BigTenCalendarEntryDto>> GetScheduleData()
+        {
+            var result = await _client.Request().SetQueryParams(new
             {
-                var homeComptetitor = game.Competitions.First().Competitors.FirstOrDefault(c => c.HomeAway == "home");
-                var awayComptetitor = game.Competitions.First().Competitors.FirstOrDefault(c => c.HomeAway == "away");
-
-                if (homeComptetitor.Team.ConferenceId == BigTenGroupNumber)
-                {
-                    teamData.Add(new BigTenTeamData(
-                        homeComptetitor,
-                        awayComptetitor,
-                        result.Week.Number));
-                }
-                if (awayComptetitor.Team.ConferenceId == BigTenGroupNumber)
-                {
-                    teamData.Add(new BigTenTeamData(
-                        awayComptetitor,
-                        homeComptetitor,
-                        result.Week.Number));
-                }
-            }
-
-            return teamData;
+                groups = BigTenGroupNumber
+            }).GetJsonAsync<BigTenGameDataDto>();
+            return result
+                .Leagues
+                .First()
+                .Calendar
+                .First(c => c.Label == "Regular Season")
+                .Entries;
         }
     }
 }

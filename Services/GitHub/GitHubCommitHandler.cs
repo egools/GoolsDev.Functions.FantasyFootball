@@ -40,7 +40,8 @@ namespace GoolsDev.Functions.FantasyFootball.Services.GitHub
 
         public async Task<BigTenSurvivorData> GetSurvivorDataFromRepo()
         {
-            return JsonConvert.DeserializeObject<BigTenSurvivorData>((await GetDataFile()).Content);
+            var file = await GetDataFile();
+            return JsonConvert.DeserializeObject<BigTenSurvivorData>(file.Content);
         }
 
         private async Task<RepositoryContent> GetDataFile()
