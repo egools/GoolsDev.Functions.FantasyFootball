@@ -11,6 +11,16 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
         public ICollection<SurvivorPicker> Pickers { get; set; }
 
         public ICollection<SurvivorWeek> Schedule { get; set; }
+
+        public SurvivorPicker this[string name]
+        {
+            get => Pickers.FirstOrDefault(p => p.Name == name || p.AlternateNames.Contains(name));
+        }
+
+        public SurvivorWeek this[int weekNum]
+        {
+            get => Schedule.FirstOrDefault(w => w.WeekNum == weekNum);
+        }
     }
 
     public class SurvivorWeek
