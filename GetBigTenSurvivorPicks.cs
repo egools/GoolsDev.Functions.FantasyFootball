@@ -33,11 +33,13 @@ namespace GoolsDev.Functions.FantasyFootball
         {
             var logger = context.GetLogger("GetBigTenSurvivorPicks");
 
+            var changesMade = false;
             var survivorData = await _commitHandler.GetSurvivorDataFromRepo();
             if (survivorData.Schedule is null)
             {
                 var scheduleData = await _gameDataService.GetScheduleData();
                 survivorData.Schedule = GameDataMapper.MapSchedule(scheduleData);
+                changesMade = true;
             }
 
             var rows = await _sheetsService.GetRows("Form Responses 1", "A2", "O1000");
@@ -51,6 +53,7 @@ namespace GoolsDev.Functions.FantasyFootball
                 {
                     survivorData.Pickers.Add(PlayerPickMapper.MapSelectionToNewPicker(selection));
                 }
+                changesMade = true;
             }
 
             foreach (var week in survivorData.Schedule)
@@ -84,9 +87,13 @@ namespace GoolsDev.Functions.FantasyFootball
                             picker.Picks.Add(selection);
                         }
                     }
+                    changesMade = true;
                 }
-                await _commitHandler.CommitSurvivorData(survivorData, week.WeekNum);
-                logger.LogInformation($"Finished mapping for week {week.WeekNum}");
+                if (changesMade)
+                {
+                    await _commitHandler.CommitSurvivorData(survivorData, week.WeekNum);
+                    logger.LogInformation($"Finished mapping for week {week.WeekNum}");
+                }
             }
         }
     }
