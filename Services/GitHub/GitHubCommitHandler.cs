@@ -33,7 +33,7 @@ namespace GoolsDev.Functions.FantasyFootball.Services.GitHub
                 _settings.RepoName,
                 _settings.DataFileName,
                 new UpdateFileRequest(
-                    $"Update Survivor Data for week {week}",
+                    $"Update survivor data for week {week}",
                     JsonConvert.SerializeObject(data, Formatting.Indented),
                     fileDetails.Sha));
         }

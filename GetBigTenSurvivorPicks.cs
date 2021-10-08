@@ -46,7 +46,8 @@ namespace GoolsDev.Functions.FantasyFootball
             if (survivorData.Pickers is null)
             {
                 survivorData.Pickers = new List<SurvivorPicker>();
-                foreach (var selection in picks.Where(p => p.Week == 1))
+                var firstWeek = picks.Min(p => p.Week);
+                foreach (var selection in picks.Where(p => p.Week == firstWeek))
                 {
                     survivorData.Pickers.Add(PlayerPickMapper.MapSelectionToNewPicker(selection));
                 }
@@ -54,7 +55,7 @@ namespace GoolsDev.Functions.FantasyFootball
 
             foreach (var week in survivorData.Schedule)
             {
-                if (DateTime.UtcNow < week.EndDate && !week.Games.Any())
+                if (DateTime.UtcNow > week.EndDate && !week.Games.Any())
                 {
                     var gamesDto = await _gameDataService.GetGameData(week.WeekNum);
                     var games = GameDataMapper.MapDto(gamesDto);

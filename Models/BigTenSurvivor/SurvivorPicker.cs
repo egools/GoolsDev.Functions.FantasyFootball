@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
@@ -10,6 +11,8 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
         public bool Eliminated { get; set; }
         public int? WeekEliminated { get; set; }
         public ICollection<SurvivorSelection> Picks { get; set; }
+
+        [JsonProperty]
         private ICollection<string> AllNames { get; set; } = new List<string>();
 
         public bool HasAlias(string candidate)
