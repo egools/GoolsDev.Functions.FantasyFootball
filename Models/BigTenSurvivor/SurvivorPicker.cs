@@ -59,7 +59,7 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
                 {
                     Eliminated = true;
                     WeekEliminated = pick.Week;
-                    EliminationReason = "Incorrect Pick";
+                    EliminationReason = $"Incorrect Pick: {pick.Team}";
                     return;
                 }
             }
