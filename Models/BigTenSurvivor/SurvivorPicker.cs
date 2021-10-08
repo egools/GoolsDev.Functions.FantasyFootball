@@ -10,6 +10,7 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
         public string Name { get; set; }
         public bool Eliminated { get; set; }
         public int? WeekEliminated { get; set; }
+        public string EliminationReason { get; set; }
         public ICollection<SurvivorSelection> Picks { get; set; }
 
         [JsonProperty]

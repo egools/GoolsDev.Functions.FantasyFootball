@@ -79,6 +79,7 @@ namespace GoolsDev.Functions.FantasyFootball
                                 selection.Correct = false;
                                 picker.Eliminated = true;
                                 picker.WeekEliminated = week.WeekNum;
+                                picker.EliminationReason = "Incorrect Pick";
                             }
                             else
                             {
@@ -87,10 +88,16 @@ namespace GoolsDev.Functions.FantasyFootball
                             picker.Picks.Add(selection);
                         }
                     }
+                    foreach (var nonPicker in survivorData.Pickers.Where(picker => !picker.Eliminated && picker.Picks.Any(p => p.Week == week.WeekNum)))
+                    {
+                        nonPicker.Eliminated = true;
+                        nonPicker.EliminationReason = "No Pick";
+                    }
                     changesMade = true;
                 }
                 if (changesMade)
                 {
+                    changesMade = false;
                     await _commitHandler.CommitSurvivorData(survivorData, week.WeekNum);
                     logger.LogInformation($"Finished mapping for week {week.WeekNum}");
                 }
