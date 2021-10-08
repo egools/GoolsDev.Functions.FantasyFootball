@@ -34,14 +34,14 @@ namespace GoolsDev.Functions.FantasyFootball.Services.GitHub
                 _settings.DataFileName,
                 new UpdateFileRequest(
                     $"Update survivor data",
-                    JsonConvert.SerializeObject(data, Formatting.Indented),
+                    "const survivorData = " + JsonConvert.SerializeObject(data, Formatting.Indented),
                     fileDetails.Sha));
         }
 
         public async Task<BigTenSurvivorData> GetSurvivorDataFromRepo()
         {
             var file = await GetDataFile();
-            return JsonConvert.DeserializeObject<BigTenSurvivorData>(file.Content);
+            return JsonConvert.DeserializeObject<BigTenSurvivorData>(file.Content.Replace("const survivorData = ", ""));
         }
 
         private async Task<RepositoryContent> GetDataFile()
