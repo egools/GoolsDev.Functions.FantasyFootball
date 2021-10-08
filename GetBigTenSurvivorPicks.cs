@@ -56,6 +56,19 @@ namespace GoolsDev.Functions.FantasyFootball
                 changesMade = true;
             }
 
+            for (int i = survivorData.UnmappedSelections.Count - 1; i >= 0; i--)
+            {
+                var selection = survivorData.UnmappedSelections.ElementAt(i);
+                var picker = survivorData[selection.Name];
+                if (picker is not null)
+                {
+                    picker.AddPick(selection);
+                    picker.CheckPicks(2, selection.Week);
+                    survivorData.UnmappedSelections.Remove(selection);
+                    changesMade = true;
+                }
+            }
+
             foreach (var week in survivorData.Schedule)
             {
                 if (DateTime.UtcNow > week.EndDate && !week.Games.Any())
@@ -66,6 +79,8 @@ namespace GoolsDev.Functions.FantasyFootball
 
                     foreach (var selection in picks.Where(p => p.Week == week.WeekNum))
                     {
+                        var selectedTeam = games.FirstOrDefault(team => team.Location == selection.Team);
+                        selection.Correct = selectedTeam.Winner;
                         var picker = survivorData[selection.Name];
                         if (picker is null)
                         {
@@ -73,34 +88,22 @@ namespace GoolsDev.Functions.FantasyFootball
                         }
                         else
                         {
-                            var selectedTeam = games.FirstOrDefault(team => team.Location == selection.Team);
-                            if (!selectedTeam.Winner)
-                            {
-                                selection.Correct = false;
-                                picker.Eliminated = true;
-                                picker.WeekEliminated = week.WeekNum;
-                                picker.EliminationReason = "Incorrect Pick";
-                            }
-                            else
-                            {
-                                selection.Correct = true;
-                            }
-                            picker.Picks.Add(selection);
+                            picker.AddPick(selection);
                         }
                     }
-                    foreach (var nonPicker in survivorData.Pickers.Where(picker => !picker.Eliminated && picker.Picks.Any(p => p.Week == week.WeekNum)))
+                    foreach (var picker in survivorData.Pickers)
                     {
-                        nonPicker.Eliminated = true;
-                        nonPicker.EliminationReason = "No Pick";
+                        picker.CheckPicks(2, week.WeekNum);
                     }
                     changesMade = true;
-                }
-                if (changesMade)
-                {
-                    changesMade = false;
-                    await _commitHandler.CommitSurvivorData(survivorData, week.WeekNum);
                     logger.LogInformation($"Finished mapping for week {week.WeekNum}");
                 }
+            }
+
+            if (changesMade)
+            {
+                await _commitHandler.CommitSurvivorData(survivorData);
+                logger.LogInformation($"Committed updated survivor data.");
             }
         }
     }

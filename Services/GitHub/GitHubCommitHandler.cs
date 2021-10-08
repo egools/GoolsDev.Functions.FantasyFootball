@@ -24,7 +24,7 @@ namespace GoolsDev.Functions.FantasyFootball.Services.GitHub
             };
         }
 
-        public async Task CommitSurvivorData(BigTenSurvivorData data, int week)
+        public async Task CommitSurvivorData(BigTenSurvivorData data)
         {
             var fileDetails = await GetDataFile();
 
@@ -33,7 +33,7 @@ namespace GoolsDev.Functions.FantasyFootball.Services.GitHub
                 _settings.RepoName,
                 _settings.DataFileName,
                 new UpdateFileRequest(
-                    $"Update survivor data for week {week}",
+                    $"Update survivor data",
                     JsonConvert.SerializeObject(data, Formatting.Indented),
                     fileDetails.Sha));
         }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
@@ -25,6 +26,43 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
         public void AddAliasName(string alias)
         {
             AllNames.Add(AliasRegex.Replace(alias.ToLower(), ""));
+        }
+
+        public void AddPick(SurvivorSelection selection)
+        {
+            var existingSelection = Picks.FirstOrDefault(p => p.Week == selection.Week);
+            if (existingSelection is not null && selection.PickDateTime > existingSelection.PickDateTime)
+            {
+                Picks.Remove(existingSelection);
+                Picks.Add(selection);
+            }
+            else
+            {
+                Picks.Add(selection);
+            }
+        }
+
+        public void CheckPicks(int startWeek, int currentWeek)
+        {
+            for (int week = startWeek; week <= currentWeek; week++)
+            {
+                var pick = Picks.FirstOrDefault(p => p.Week == week);
+                if (pick is null)
+                {
+                    Eliminated = true;
+                    WeekEliminated = week;
+                    EliminationReason = "No Pick";
+                    return;
+                }
+
+                if (pick.Correct == false)
+                {
+                    Eliminated = true;
+                    WeekEliminated = pick.Week;
+                    EliminationReason = "Incorrect Pick";
+                    return;
+                }
+            }
         }
     }
 }
