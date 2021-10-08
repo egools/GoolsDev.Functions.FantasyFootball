@@ -45,18 +45,43 @@ namespace GoolsDev.Functions.FantasyFootball
             if (survivorData.Pickers is null)
             {
                 survivorData.Pickers = new List<SurvivorPicker>();
-                //TODO: create pickers
+                foreach (var selection in picks.Where(p => p.Week == 1))
+                {
+                    survivorData.Pickers.Add(PlayerPickMapper.MapSelectionToNewPicker(selection));
+                }
             }
 
             foreach (var week in survivorData.Schedule)
             {
-                if (DateTime.UtcNow < week.EndDate)
+                if (DateTime.UtcNow < week.EndDate && !week.Games.Any())
                 {
-                    var gamesDto = await _gameDataService.GetGameData(1);
+                    var gamesDto = await _gameDataService.GetGameData(week.WeekNum);
                     var games = GameDataMapper.MapDto(gamesDto);
-                    survivorData[1].Games = games;
-                    //TODO: map games into picks
-                    //TODO: handle unmapped picks
+                    week.Games = games;
+
+                    foreach (var selection in picks.Where(p => p.Week == week.WeekNum))
+                    {
+                        var picker = survivorData[selection.Name];
+                        if (picker is null)
+                        {
+                            //TODO: handle unmapped picks
+                        }
+                        else
+                        {
+                            var selectedTeam = games.FirstOrDefault(team => team.Location == selection.Team);
+                            if (!selectedTeam.Winner)
+                            {
+                                selection.Correct = false;
+                                picker.Eliminated = true;
+                                picker.WeekEliminated = week.WeekNum;
+                            }
+                            else
+                            {
+                                selection.Correct = true;
+                            }
+                            picker.Picks.Add(selection);
+                        }
+                    }
                 }
             }
 

@@ -13,19 +13,32 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
         private static readonly Regex WeekRegex = new("Week (?<WeekNum>\\d+).*", RegexOptions.Compiled);
         private static readonly Regex TeamRegex = new("(?<TeamLocation>.*) \\(.*\\)", RegexOptions.Compiled);
 
-        public static IEnumerable<SurvivorPick> MapRows(IEnumerable<IEnumerable<string>> rows)
+        public static IEnumerable<SurvivorSelection> MapRows(IEnumerable<IEnumerable<string>> rows)
         {
             return rows
                 .Select(row => row.Where(cell => !string.IsNullOrEmpty(cell)))
                 .Where(row => row.Any())
-                .Select(RowToPick);
+                .Select(RowToSelection);
         }
 
-        private static SurvivorPick RowToPick(IEnumerable<string> row)
+        public static SurvivorPicker MapSelectionToNewPicker(SurvivorSelection selection)
+        {
+            var picker = new SurvivorPicker
+            {
+                Name = selection.Name,
+                AllNames = new List<string>(),
+                Eliminated = false,
+                Picks = new List<SurvivorSelection>()
+            };
+            picker.AddAliasName(selection.Name);
+            return picker;
+        }
+
+        private static SurvivorSelection RowToSelection(IEnumerable<string> row)
         {
             if (row.Count() != 4)
                 throw new FormatException("Row does not contain correctly formatted data.");
-            return new SurvivorPick
+            return new SurvivorSelection
             {
                 PickDateTime = GetDateFromRowData(row.ElementAt(0)),
                 Name = row.ElementAt(1),

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
@@ -14,7 +15,7 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
 
         public SurvivorPicker this[string name]
         {
-            get => Pickers.FirstOrDefault(p => p.Name == name || p.AlternateNames.Contains(name));
+            get => Pickers.FirstOrDefault(p => p.HasAlias(name));
         }
 
         public SurvivorWeek this[int weekNum]
@@ -41,14 +42,26 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
 
     public class SurvivorPicker
     {
+        private readonly Regex AliasRegex = new("[\\s']", RegexOptions.Compiled);
         public string Name { get; set; }
-        public ICollection<string> AlternateNames { get; set; }
         public bool Eliminated { get; set; }
         public int? WeekEliminated { get; set; }
-        public ICollection<SurvivorPick> Picks { get; set; }
+        public ICollection<SurvivorSelection> Picks { get; set; }
+        private ICollection<string> AllNames { get; set; }
+
+        public bool HasAlias(string candidate)
+        {
+            var name = AliasRegex.Replace(candidate.ToLower(), "");
+            return AllNames.Contains(name);
+        }
+
+        public void AddAliasName(string alias)
+        {
+            AllNames.Add(AliasRegex.Replace(alias.ToLower(), ""));
+        }
     }
 
-    public class SurvivorPick
+    public class SurvivorSelection
     {
         public DateTime PickDateTime { get; set; }
         public string Name { get; set; }

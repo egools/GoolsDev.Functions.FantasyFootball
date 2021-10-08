@@ -6,7 +6,7 @@
         public string Location { get; init; }
         public string Abbreviation { get; init; }
         public int Week { get; init; }
-        public bool? Winner { get; set; }
+        public bool Winner { get; set; }
         public bool HomeTeam { get; init; }
         public string OpponentLocation { get; init; }
         public string Score { get; set; }
