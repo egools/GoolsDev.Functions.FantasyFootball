@@ -6,7 +6,7 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
 {
     public class SurvivorPicker
     {
-        private readonly Regex AliasRegex = new("[\\s']", RegexOptions.Compiled);
+        private readonly Regex AliasRegex = new("[\\s'’\\-_,\"`]", RegexOptions.Compiled);
         public string Name { get; set; }
         public bool Eliminated { get; set; }
         public int? WeekEliminated { get; set; }
