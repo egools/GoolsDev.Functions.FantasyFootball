@@ -26,7 +26,6 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
             var picker = new SurvivorPicker
             {
                 Name = selection.Name,
-                AllNames = new List<string>(),
                 Eliminated = false,
                 Picks = new List<SurvivorSelection>()
             };

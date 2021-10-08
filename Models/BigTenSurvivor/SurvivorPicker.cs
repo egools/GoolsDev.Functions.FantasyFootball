@@ -10,7 +10,7 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
         public bool Eliminated { get; set; }
         public int? WeekEliminated { get; set; }
         public ICollection<SurvivorSelection> Picks { get; set; }
-        private ICollection<string> AllNames { get; set; }
+        private ICollection<string> AllNames { get; set; } = new List<string>();
 
         public bool HasAlias(string candidate)
         {
