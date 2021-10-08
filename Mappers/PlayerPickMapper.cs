@@ -48,7 +48,7 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
 
         private static DateTime GetDateFromRowData(string rowData)
         {
-            if (DateTime.TryParse(rowData, out var date))
+            if (!DateTime.TryParse(rowData, out var date))
                 throw new FormatException("Date data does not contain correctly formatted data.");
             return date;
         }
