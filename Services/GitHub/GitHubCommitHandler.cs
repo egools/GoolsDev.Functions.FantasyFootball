@@ -24,7 +24,7 @@ namespace GoolsDev.Functions.FantasyFootball.Services.GitHub
             };
         }
 
-        public async Task CommitSurvivorData(BigTenSurvivorData data, string week)
+        public async Task CommitSurvivorData(BigTenSurvivorData data, int week)
         {
             var fileDetails = await GetDataFile();
 

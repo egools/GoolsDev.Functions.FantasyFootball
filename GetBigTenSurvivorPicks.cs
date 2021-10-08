@@ -8,6 +8,7 @@ using GoolsDev.Functions.FantasyFootball.Services;
 using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
 using GoolsDev.Functions.FantasyFootball.Services.GitHub;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
@@ -64,7 +65,7 @@ namespace GoolsDev.Functions.FantasyFootball
                         var picker = survivorData[selection.Name];
                         if (picker is null)
                         {
-                            //TODO: handle unmapped picks
+                            survivorData.UnmappedSelections.Add(selection);
                         }
                         else
                         {
@@ -83,9 +84,9 @@ namespace GoolsDev.Functions.FantasyFootball
                         }
                     }
                 }
+                await _commitHandler.CommitSurvivorData(survivorData, week.WeekNum);
+                logger.LogInformation($"Finished mapping for week {week.WeekNum}");
             }
-
-            //await _commitHandler.CommitSurvivorData(new BigTenSurvivorData(), string.Empty);
         }
     }
 }

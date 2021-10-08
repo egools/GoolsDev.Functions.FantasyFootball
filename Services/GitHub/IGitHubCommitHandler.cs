@@ -5,7 +5,7 @@ namespace GoolsDev.Functions.FantasyFootball.Services.GitHub
 {
     public interface IGitHubCommitHandler
     {
-        Task CommitSurvivorData(BigTenSurvivorData data, string week);
+        Task CommitSurvivorData(BigTenSurvivorData data, int week);
 
         Task<BigTenSurvivorData> GetSurvivorDataFromRepo();
     }
