@@ -11,6 +11,7 @@
         public string OpponentLocation { get; init; }
         public string Score { get; set; }
         public bool IsBigTen { get; init; }
+        public bool IsCompleted { get; init; }
 
         public override string ToString()
         {

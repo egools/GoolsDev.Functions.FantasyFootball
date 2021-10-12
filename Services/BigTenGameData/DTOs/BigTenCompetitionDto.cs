@@ -8,5 +8,7 @@ namespace GoolsDev.Functions.FantasyFootball.Services.BigTenGameData
         public string Date { get; init; }
 
         public List<BigTenCompetitorDto> Competitors { get; init; }
+
+        public BigTenCompetitionStatusDto Status { get; set; }
     }
 }

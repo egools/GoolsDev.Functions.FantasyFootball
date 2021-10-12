@@ -22,5 +22,10 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
         {
             get => Schedule.FirstOrDefault(w => w.WeekNum == weekNum);
         }
+
+        public bool AllWeekPicksCompleted(int weekNum)
+        {
+            return Pickers.All(picker => picker.Eliminated || picker.Picks.Any(pick => pick.Week == weekNum && pick.Correct is not null));
+        }
     }
 }

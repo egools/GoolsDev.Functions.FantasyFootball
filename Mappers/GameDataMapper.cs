@@ -12,15 +12,19 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
     {
         private const string BigTenGroupNumber = "5";
 
-        public static ICollection<SurvivorWeek> MapSchedule(IEnumerable<BigTenCalendarEntryDto> scheduleData)
+        public static ICollection<SurvivorWeek> MapSchedule(IEnumerable<BigTenCalendarEntryDto> scheduleData, int startWeek, int endWeek)
         {
             var schedule = new List<SurvivorWeek>();
             foreach (var entry in scheduleData)
             {
-                schedule.Add(new SurvivorWeek(
-                    int.Parse(entry.Value),
-                    DateTime.Parse(entry.StartDate),
-                    DateTime.Parse(entry.EndDate)));
+                var week = int.Parse(entry.Value);
+                if (week >= startWeek && week <= endWeek)
+                {
+                    schedule.Add(new SurvivorWeek(
+                        week,
+                        DateTime.Parse(entry.StartDate),
+                        DateTime.Parse(entry.EndDate)));
+                }
             }
             return schedule;
         }
@@ -32,20 +36,23 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
             {
                 var homeComptetitor = game.Competitions.First().Competitors.FirstOrDefault(c => c.HomeAway == "home");
                 var awayComptetitor = game.Competitions.First().Competitors.FirstOrDefault(c => c.HomeAway == "away");
+                var completed = game.Competitions.First().Status.Type.Completed;
 
                 if (homeComptetitor.Team.ConferenceId == BigTenGroupNumber)
                 {
                     teamData.Add(CreateTeamData(
                         homeComptetitor,
                         awayComptetitor,
-                        gameData.Week.Number));
+                        gameData.Week.Number,
+                        completed));
                 }
                 if (awayComptetitor.Team.ConferenceId == BigTenGroupNumber)
                 {
                     teamData.Add(CreateTeamData(
                         awayComptetitor,
                         homeComptetitor,
-                        gameData.Week.Number));
+                        gameData.Week.Number,
+                        completed));
                 }
             }
 
@@ -55,7 +62,8 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
         private static BigTenTeamGame CreateTeamData(
             BigTenCompetitorDto team,
             BigTenCompetitorDto opponent,
-            int week)
+            int week,
+            bool completed)
         {
             return new BigTenTeamGame
             {
@@ -67,7 +75,8 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
                 HomeTeam = team.HomeAway == "home",
                 OpponentLocation = opponent.Team.Location,
                 Score = $"{team.Score}-{opponent.Score}",
-                IsBigTen = team.Team.ConferenceId == BigTenGroupNumber
+                IsBigTen = team.Team.ConferenceId == BigTenGroupNumber,
+                IsCompleted = completed
             };
         }
     }

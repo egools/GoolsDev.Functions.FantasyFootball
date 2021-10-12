@@ -39,7 +39,7 @@ namespace GoolsDev.Functions.FantasyFootball
                 if (survivorData.Schedule is null)
                 {
                     var scheduleData = await _gameDataService.GetScheduleData();
-                    survivorData.Schedule = GameDataMapper.MapSchedule(scheduleData);
+                    survivorData.Schedule = GameDataMapper.MapSchedule(scheduleData, 2, 13);
                     changesMade = true;
                 }
 
@@ -72,15 +72,19 @@ namespace GoolsDev.Functions.FantasyFootball
 
                 foreach (var week in survivorData.Schedule)
                 {
-                    if (DateTime.UtcNow > week.EndDate && !week.Games.Any())
+                    if (!week.Games.Any() || (DateTime.UtcNow > week.StartDate && week.Games.Any(g => !g.IsCompleted)))
                     {
                         var gamesDto = await _gameDataService.GetGameData(week.WeekNum);
                         var games = GameDataMapper.MapDto(gamesDto);
                         week.Games = games;
-
+                        changesMade = true;
+                        logger.LogInformation($"Game data updated for week {week.WeekNum}");
+                    }
+                    if (week.Games.All(g => g.IsCompleted) && !survivorData.AllWeekPicksCompleted(week.WeekNum))
+                    {
                         foreach (var selection in picks.Where(p => p.Week == week.WeekNum))
                         {
-                            var selectedTeam = games.FirstOrDefault(team => team.Location == selection.Team);
+                            var selectedTeam = week.Games.FirstOrDefault(team => team.Location == selection.Team);
                             selection.Correct = selectedTeam.Winner;
                             var picker = survivorData[selection.Name];
                             if (picker is null)
@@ -97,7 +101,7 @@ namespace GoolsDev.Functions.FantasyFootball
                             picker.CheckPicks(2, week.WeekNum);
                         }
                         changesMade = true;
-                        logger.LogInformation($"Finished mapping for week {week.WeekNum}");
+                        logger.LogInformation($"Mapped picks for week {week.WeekNum}");
                     }
                 }
 
