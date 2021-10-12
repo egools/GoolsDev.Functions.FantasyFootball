@@ -62,6 +62,14 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
                     EliminationReason = $"Incorrect Pick: {pick.Team}";
                     return;
                 }
+
+                if (Picks.Any(p => p.Team == pick.Team))
+                {
+                    Eliminated = true;
+                    WeekEliminated = pick.Week;
+                    EliminationReason = $"Invalid Repeat Pick: {pick.Team}";
+                    return;
+                }
             }
         }
     }
