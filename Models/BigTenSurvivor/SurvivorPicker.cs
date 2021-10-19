@@ -63,7 +63,7 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
                     return;
                 }
 
-                if (Picks.Any(p => p.Team == pick.Team))
+                if (Picks.Any(p => p.Team == pick.Team && p.Week != pick.Week && p.Week < week))
                 {
                     Eliminated = true;
                     WeekEliminated = pick.Week;
