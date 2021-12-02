@@ -7,6 +7,10 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
 {
     public class BigTenSurvivorData
     {
+        public bool HasWinner { get; set; }
+
+        public string WinnerName { get; set; }
+
         public ICollection<SurvivorPicker> Pickers { get; set; }
 
         public ICollection<SurvivorWeek> Schedule { get; set; }

@@ -36,6 +36,13 @@ namespace GoolsDev.Functions.FantasyFootball
             {
                 var changesMade = false;
                 var survivorData = await _commitHandler.GetSurvivorDataFromRepo();
+
+                if (survivorData.HasWinner)
+                {
+                    logger.LogInformation("Winner already found. No data to be checked.");
+                    return;
+                }
+
                 if (survivorData.Schedule is null)
                 {
                     var scheduleData = await _gameDataService.GetScheduleData();
@@ -100,8 +107,22 @@ namespace GoolsDev.Functions.FantasyFootball
                         {
                             picker.CheckPicks(2, week.WeekNum);
                         }
+
+                        if (survivorData.Pickers.All(p => p.Eliminated))
+                        {
+                            logger.LogInformation("Winner determined. All players eliminated.");
+                            survivorData.HasWinner = true;
+                            survivorData.WinnerName = "All players eliminated. Tie breaker needed.";
+                        }
+                        else if (survivorData.Pickers.Count(p => !p.Eliminated) == 1)
+                        {
+                            logger.LogInformation("Winner found.");
+                            survivorData.HasWinner = true;
+                            survivorData.WinnerName = survivorData.Pickers.First(p => !p.Eliminated).Name;
+                        }
+
                         changesMade = true;
-                        logger.LogInformation($"Mapped picks for week {week.WeekNum}");
+                        logger.LogInformation($"Mapped picks for week {week.WeekNum}.");
                     }
                 }
 
