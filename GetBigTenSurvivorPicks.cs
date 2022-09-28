@@ -9,6 +9,7 @@ using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
 using GoolsDev.Functions.FantasyFootball.Services.GitHub;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
@@ -17,15 +18,18 @@ namespace GoolsDev.Functions.FantasyFootball
         private readonly IGoogleSheetsService _sheetsService;
         private readonly IBigTenGameDataService _gameDataService;
         private readonly IGitHubCommitHandler _commitHandler;
+        private readonly BigTenSurvivorSettings _survivorSettings;
 
         public GetBigTenSurvivorPicks(
             IGoogleSheetsService sheetsService,
             IBigTenGameDataService gameDataService,
-            IGitHubCommitHandler gitHubCommitHandler)
+            IGitHubCommitHandler gitHubCommitHandler,
+            IOptions<BigTenSurvivorSettings> survivorOptions)
         {
             _sheetsService = sheetsService;
             _gameDataService = gameDataService;
             _commitHandler = gitHubCommitHandler;
+            _survivorSettings = survivorOptions.Value;
         }
 
         [Function("GetBigTenSurvivorPicks")]
@@ -43,10 +47,13 @@ namespace GoolsDev.Functions.FantasyFootball
                     return;
                 }
 
-                if (survivorData.Schedule is null)
+                if (survivorData.Schedule is null || !survivorData.Schedule.Any())
                 {
                     var scheduleData = await _gameDataService.GetScheduleData();
-                    survivorData.Schedule = GameDataMapper.MapSchedule(scheduleData, 2, 13);
+                    survivorData.Schedule = GameDataMapper.MapSchedule(
+                        scheduleData,
+                        _survivorSettings.StartWeek,
+                        _survivorSettings.EndWeek);
                     changesMade = true;
                 }
 
@@ -71,7 +78,7 @@ namespace GoolsDev.Functions.FantasyFootball
                     if (picker is not null)
                     {
                         picker.AddPick(selection);
-                        picker.CheckPicks(2, selection.Week);
+                        picker.CheckPicks(3, selection.Week);
                         survivorData.UnmappedSelections.Remove(selection);
                         changesMade = true;
                     }
@@ -92,7 +99,17 @@ namespace GoolsDev.Functions.FantasyFootball
                         foreach (var selection in picks.Where(p => p.Week == week.WeekNum))
                         {
                             var selectedTeam = week.Games.FirstOrDefault(team => team.Location == selection.Team);
-                            selection.Correct = selectedTeam.Winner;
+                            if (selection.PickDateTime > selectedTeam.GameDateTime)
+                            {
+                                selection.Correct = false;
+                                selection.SelectionStatus = "Late Pick";
+                            }
+                            else
+                            {
+                                selection.Correct = selectedTeam.Winner;
+                                var status = selectedTeam.Winner ? "Beat" : "Lost to";
+                                selection.SelectionStatus = $"{status} {selectedTeam.OpponentLocation} {selectedTeam.Score}";
+                            }
                             var picker = survivorData[selection.Name];
                             if (picker is null)
                             {
@@ -100,12 +117,21 @@ namespace GoolsDev.Functions.FantasyFootball
                             }
                             else
                             {
-                                picker.AddPick(selection);
+                                var existingSelection = picker.Picks.FirstOrDefault(p => p.Week == selection.Week);
+                                if (existingSelection == null)
+                                {
+                                    picker.AddPick(selection);
+                                }
+                                else if (selection.PickDateTime > existingSelection.PickDateTime)
+                                {
+                                    picker.Picks.Remove(existingSelection);
+                                    picker.AddPick(selection);
+                                }
                             }
                         }
                         foreach (var picker in survivorData.Pickers)
                         {
-                            picker.CheckPicks(2, week.WeekNum);
+                            picker.CheckPicks(_survivorSettings.StartWeek, week.WeekNum);
                         }
 
                         if (survivorData.Pickers.All(p => p.Eliminated))

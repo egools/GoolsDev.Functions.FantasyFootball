@@ -1,4 +1,6 @@
-﻿namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
+﻿using System;
+
+namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
 {
     public class BigTenTeamGame
     {
@@ -12,6 +14,7 @@
         public string Score { get; set; }
         public bool IsBigTen { get; init; }
         public bool IsCompleted { get; init; }
+        public DateTime GameDateTime { get; set; }
 
         public override string ToString()
         {

@@ -9,5 +9,6 @@ namespace GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor
         public int Week { get; set; }
         public string Team { get; set; }
         public bool? Correct { get; set; }
+        public string SelectionStatus { get; set; }
     }
 }

@@ -37,6 +37,7 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
                 var homeComptetitor = game.Competitions.First().Competitors.FirstOrDefault(c => c.HomeAway == "home");
                 var awayComptetitor = game.Competitions.First().Competitors.FirstOrDefault(c => c.HomeAway == "away");
                 var completed = game.Competitions.First().Status.Type.Completed;
+                var gameDateTime = DateTime.Parse(game.Competitions.First().Date);
 
                 if (homeComptetitor.Team.ConferenceId == BigTenGroupNumber)
                 {
@@ -44,7 +45,8 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
                         homeComptetitor,
                         awayComptetitor,
                         gameData.Week.Number,
-                        completed));
+                        completed,
+                        gameDateTime));
                 }
                 if (awayComptetitor.Team.ConferenceId == BigTenGroupNumber)
                 {
@@ -52,7 +54,8 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
                         awayComptetitor,
                         homeComptetitor,
                         gameData.Week.Number,
-                        completed));
+                        completed,
+                        gameDateTime));
                 }
             }
 
@@ -63,7 +66,8 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
             BigTenCompetitorDto team,
             BigTenCompetitorDto opponent,
             int week,
-            bool completed)
+            bool completed,
+            DateTime gameDateTime)
         {
             return new BigTenTeamGame
             {
@@ -76,7 +80,8 @@ namespace GoolsDev.Functions.FantasyFootball.Mappers
                 OpponentLocation = opponent.Team.Location,
                 Score = $"{team.Score}-{opponent.Score}",
                 IsBigTen = team.Team.ConferenceId == BigTenGroupNumber,
-                IsCompleted = completed
+                IsCompleted = completed,
+                GameDateTime = gameDateTime
             };
         }
     }

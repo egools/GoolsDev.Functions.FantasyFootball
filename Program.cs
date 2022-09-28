@@ -1,4 +1,5 @@
 using Flurl.Http.Configuration;
+using GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor;
 using GoolsDev.Functions.FantasyFootball.Services;
 using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
 using GoolsDev.Functions.FantasyFootball.Services.GitHub;
@@ -18,6 +19,11 @@ namespace GoolsDev.Functions.FantasyFootball
                 .ConfigureFunctionsWorkerDefaults()
                 .ConfigureServices(s =>
                 {
+                    s.AddOptions<BigTenSurvivorSettings>()
+                    .Configure<IConfiguration>((settings, configuration) =>
+                    {
+                        configuration.GetSection("BigTenSurvivorSettings").Bind(settings);
+                    });
                     s.AddOptions<GoogleSheetsServiceSettings>()
                     .Configure<IConfiguration>((settings, configuration) =>
                     {
