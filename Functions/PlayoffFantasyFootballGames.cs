@@ -30,7 +30,13 @@ namespace GoolsDev.Functions.FantasyFootball
             var logger = context.GetLogger(nameof(PlayoffFantasyFootballGames));
             logger.LogInformation($"Playoff Fantasy Football Games Trigger executed at: {DateTime.Now}");
 
-            var result = await _espnService.GetNflPostSeasonGames(2023, 3);
+            var (week, year) = NflDateHelper.GetPostSeasonWeek(DateTime.UtcNow);
+
+            if (week < 0 || year < 0)
+            {
+                logger.LogInformation("Not an active playoff week.");
+            }
+            var result = await _espnService.GetNflPostSeasonGames(week, year);
             if (result.Success)
             {
                 foreach (var game in result.Data)
