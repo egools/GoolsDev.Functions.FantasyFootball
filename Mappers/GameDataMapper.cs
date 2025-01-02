@@ -3,10 +3,8 @@ using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace GoolsDev.Functions.FantasyFootball.Mappers
+namespace GoolsDev.Functions.FantasyFootball
 {
     public static class GameDataMapper
     {

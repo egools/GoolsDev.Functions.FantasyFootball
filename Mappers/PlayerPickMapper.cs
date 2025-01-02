@@ -2,11 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-namespace GoolsDev.Functions.FantasyFootball.Mappers
+namespace GoolsDev.Functions.FantasyFootball
 {
     public static class PlayerPickMapper
     {

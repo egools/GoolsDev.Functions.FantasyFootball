@@ -1,10 +1,7 @@
 ﻿using Flurl.Http;
-using Flurl.Http.Configuration;
 using Microsoft.Extensions.Options;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball.Services.BigTenGameData
@@ -14,9 +11,9 @@ namespace GoolsDev.Functions.FantasyFootball.Services.BigTenGameData
         private readonly string BigTenGroupNumber = "5";
         private IFlurlClient _client;
 
-        public BigTenGameDataService(IOptions<BigTenGameDataServiceSettings> options, IFlurlClientFactory factory)
+        public BigTenGameDataService(IOptions<BigTenGameDataServiceSettings> options)
         {
-            _client = factory.Get($"{options.Value.BaseScoreboardUrl}");
+            _client = new FlurlClient($"{options.Value.BaseScoreboardUrl}");
         }
 
         public async Task<BigTenGameDataDto> GetGameData(int week)

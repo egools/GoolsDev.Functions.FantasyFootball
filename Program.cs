@@ -1,4 +1,4 @@
-using Flurl.Http.Configuration;
+using GoolsDev.Functions.FantasyFootball;
 using GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor;
 using GoolsDev.Functions.FantasyFootball.Services;
 using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
@@ -6,55 +6,62 @@ using GoolsDev.Functions.FantasyFootball.Services.GitHub;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
 using YahooFantasyService;
+using EspnDataService;
+using Microsoft.Azure.Cosmos.Fluent;
+using System.Net;
+using System;
+using Microsoft.Azure.Cosmos;
+using Azure.Identity;
 
-namespace GoolsDev.Functions.FantasyFootball
-{
-    public class Program
+
+var host = new HostBuilder()
+    .ConfigureFunctionsWorkerDefaults()
+    .ConfigureServices(s =>
     {
-        public static async Task Main()
+        s.AddOptions<BigTenSurvivorSettings>()
+        .Configure<IConfiguration>((settings, configuration) =>
         {
-            var host = new HostBuilder()
-                .ConfigureFunctionsWorkerDefaults()
-                .ConfigureServices(s =>
-                {
-                    s.AddOptions<BigTenSurvivorSettings>()
-                    .Configure<IConfiguration>((settings, configuration) =>
-                    {
-                        configuration.GetSection("BigTenSurvivorSettings").Bind(settings);
-                    });
-                    s.AddOptions<GoogleSheetsServiceSettings>()
-                    .Configure<IConfiguration>((settings, configuration) =>
-                    {
-                        configuration.GetSection("GoogleSheetsSettings").Bind(settings);
-                    });
-                    s.AddOptions<YahooServiceSettings>()
-                    .Configure<IConfiguration>((settings, configuration) =>
-                    {
-                        configuration.GetSection("YahooServiceSettings").Bind(settings);
-                    });
-                    s.AddOptions<BigTenGameDataServiceSettings>()
-                    .Configure<IConfiguration>((settings, configuration) =>
-                    {
-                        configuration.GetSection("GameData").Bind(settings);
-                    });
+            configuration.GetSection("BigTenSurvivorSettings").Bind(settings);
+        });
+        s.AddOptions<GoogleSheetsServiceSettings>()
+        .Configure<IConfiguration>((settings, configuration) =>
+        {
+            configuration.GetSection("GoogleSheetsSettings").Bind(settings);
+        });
+        s.AddOptions<YahooServiceSettings>()
+        .Configure<IConfiguration>((settings, configuration) =>
+        {
+            configuration.GetSection("YahooServiceSettings").Bind(settings);
+        });
+        s.AddOptions<BigTenGameDataServiceSettings>()
+        .Configure<IConfiguration>((settings, configuration) =>
+        {
+            configuration.GetSection("GameData").Bind(settings);
+        });
 
-                    s.AddOptions<GitHubCommitHandlerSettings>()
-                    .Configure<IConfiguration>((settings, configuration) =>
-                    {
-                        configuration.GetSection("GitHubSettings").Bind(settings);
-                    });
+        s.AddOptions<GitHubCommitHandlerSettings>()
+        .Configure<IConfiguration>((settings, configuration) =>
+        {
+            configuration.GetSection("GitHubSettings").Bind(settings);
+        });
 
-                    s.AddSingleton<IFlurlClientFactory, PerBaseUrlFlurlClientFactory>()
-                    .AddSingleton<IYahooService, YahooService>()
-                    .AddSingleton<IGoogleSheetsService, GoogleSheetsService>()
-                    .AddSingleton<IBigTenGameDataService, BigTenGameDataService>()
-                    .AddSingleton<IGitHubCommitHandler, GitHubCommitHandler>();
-                })
-                .Build();
+        s.AddSingleton<IYahooService, YahooService>()
+        .AddSingleton<IEspnService, EspnService>()
+        .AddSingleton<IGoogleSheetsService, GoogleSheetsService>()
+        .AddSingleton<IBigTenGameDataService, BigTenGameDataService>()
+        .AddSingleton<IGitHubCommitHandler, GitHubCommitHandler>()
+        .AddSingleton(s =>
+        {
+            var endpoint = Environment.GetEnvironmentVariable("CosmosDbEndPoint");
+            var key = Environment.GetEnvironmentVariable("CosmosDbKey");
+            return new CosmosClient(endpoint, key,
+            new CosmosClientOptions
+            {
+                SerializerOptions = new CosmosSerializationOptions { PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase },
+            });
+        });
+    })
+    .Build();
 
-            await host.RunAsync();
-        }
-    }
-}
+await host.RunAsync();

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using GoolsDev.Functions.FantasyFootball.Mappers;
 using GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor;
 using GoolsDev.Functions.FantasyFootball.Services;
 using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
@@ -32,10 +31,10 @@ namespace GoolsDev.Functions.FantasyFootball
             _survivorSettings = survivorOptions.Value;
         }
 
-        [Function("GetBigTenSurvivorPicks")]
+        [Function(nameof(GetBigTenSurvivorPicks))]
         public async Task Run([TimerTrigger("%GetSurvivorDataTimerSchedule%")] FunctionContext context)
         {
-            var logger = context.GetLogger("GetBigTenSurvivorPicks");
+            var logger = context.GetLogger(nameof(GetBigTenSurvivorPicks));
             try
             {
                 var changesMade = false;
@@ -78,7 +77,7 @@ namespace GoolsDev.Functions.FantasyFootball
                     if (picker is not null)
                     {
                         picker.AddPick(selection);
-                        picker.CheckPicks(3, selection.Week);
+                        picker.CheckPicks(_survivorSettings.StartWeek, selection.Week);
                         survivorData.UnmappedSelections.Remove(selection);
                         changesMade = true;
                     }
@@ -117,16 +116,7 @@ namespace GoolsDev.Functions.FantasyFootball
                             }
                             else
                             {
-                                var existingSelection = picker.Picks.FirstOrDefault(p => p.Week == selection.Week);
-                                if (existingSelection == null)
-                                {
-                                    picker.AddPick(selection);
-                                }
-                                else if (selection.PickDateTime > existingSelection.PickDateTime)
-                                {
-                                    picker.Picks.Remove(existingSelection);
-                                    picker.AddPick(selection);
-                                }
+                                picker.AddPick(selection);
                             }
                         }
                         foreach (var picker in survivorData.Pickers)

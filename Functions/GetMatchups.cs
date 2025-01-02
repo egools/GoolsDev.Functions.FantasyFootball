@@ -14,10 +14,10 @@ namespace GoolsDev.Functions.FantasyFootball
             _yahoo = yahooService;
         }
 
-        [Function("GetMatchups")]
+        [Function(nameof(GetMatchups))]
         public void Run([TimerTrigger("%GetMatchupsTimerSchedule%")] FunctionContext context)
         {
-            var logger = context.GetLogger("GetMatchups");
+            var logger = context.GetLogger(nameof(GetMatchups));
             logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
         }
     }
