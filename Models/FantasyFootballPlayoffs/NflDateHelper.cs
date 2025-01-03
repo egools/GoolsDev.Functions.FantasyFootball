@@ -1,30 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
     public static class NflDateHelper
     {
-        private const long wc2023Start = 638405388000000000;
-        private const long wc2023End = 638410571400000000;
-        private const long div2023Start = 638410572000000000;
-        private const long div2023End = 638416619400000000;
-        private const long conf2023Start = 638416620000000000;
-        private const long conf2023End = 638422667400000000;
-        private const long sb2023Start = 638428716000000000;
-        private const long sb2023End = 638435627400000000;
+        private const long wc2023Start = 638404344000000000;    //2024-01-10T03:00Z
+        private const long wc2023End = 638410391400000000;      //2024-01-17T02:59Z
+        private const long div2023Start = 638410392000000000;   //2024-01-17T03:00Z
+        private const long div2023End = 638416439400000000;     //2024-01-24T02:59Z
+        private const long conf2023Start = 638416440000000000;  //2024-01-24T03:00Z
+        private const long conf2023End = 638422487400000000;    //2024-01-31T02:59Z
+        private const long sb2023Start = 638428536000000000;    //2024-02-07T03:00Z
+        private const long sb2023End = 638434583400000000;      //2024-02-14T02:59Z
 
-        private const long wc2024Start = 638719020000000000;
-        private const long wc2024End = 638726795400000000;
-        private const long div2024Start = 638726796000000000;
-        private const long div2024End = 638732843400000000;
-        private const long conf2024Start = 638732844000000000;
-        private const long conf2024End = 638738891400000000;
-        private const long sb2024Start = 638744940000000000;
-        private const long sb2024End = 638751851400000000;
+        private const long wc2024Start = 638718840000000000;    //2025-01-08T03:00Z
+        private const long wc2024End = 638724887400000000;      //2025-01-15T02:59Z
+        private const long div2024Start = 638724888000000000;   //2025-01-15T03:00Z
+        private const long div2024End = 638730935400000000;     //2025-01-22T02:59Z
+        private const long conf2024Start = 638730936000000000;  //2025-01-22T03:00Z
+        private const long conf2024End = 638736983400000000;    //2025-01-29T02:59Z
+        private const long sb2024Start = 638743032000000000;    //2025-02-05T03:00Z
+        private const long sb2024End = 638749079400000000;      //2025-02-12T02:59Z
 
         public static (int week, int year) GetPostSeasonWeek(DateTime date) => date.Ticks switch
         {

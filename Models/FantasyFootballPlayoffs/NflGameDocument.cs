@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
@@ -9,6 +8,7 @@ namespace GoolsDev.Functions.FantasyFootball
         string Id,
         string WeekId,
         string GameName,
+        bool HadStatsPulled,
         NflGameTeam HomeTeam,
         NflGameTeam AwayTeam,
         NflGameStatus Status,
@@ -32,7 +32,6 @@ namespace GoolsDev.Functions.FantasyFootball
         bool IsActive,
         string Mascot,
         double Score,
-        IEnumerable<double> LineScore,
         NflRecord Record
     );
 
