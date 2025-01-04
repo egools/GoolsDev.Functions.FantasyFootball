@@ -3,7 +3,6 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -49,27 +48,24 @@ namespace GoolsDev.Functions.FantasyFootball
             {
                 logger.LogError("Games service call failed with status code {Code}", gameResult.Error.HttpStatusCode);
             }
-            await Task.Delay(1000);
+            await Task.Delay(500);
 
             var weekId = $"{year}.3.{week}";
-            QueryDefinition query = new QueryDefinition(
+            var query = new QueryDefinition(
                 "select * from games g where g.weekId = @WeekId")
                 .WithParameter("@WeekId", weekId);
-
-            List<NflGameDocument> games = new List<NflGameDocument>();
-            using (FeedIterator<NflGameDocument> resultSet = _gamesContainer.GetItemQueryIterator<NflGameDocument>(
-                query,
-                requestOptions: new QueryRequestOptions()
-                {
-                    PartitionKey = new PartitionKey(weekId),
-                    MaxItemCount = 16
-                }))
+            var requestOptions = new QueryRequestOptions()
             {
-                while (resultSet.HasMoreResults)
-                {
-                    FeedResponse<NflGameDocument> response = await resultSet.ReadNextAsync();
-                    NflGameDocument oldGame = response.First();
+                PartitionKey = new PartitionKey(weekId),
+                MaxItemCount = 16
+            };
 
+            using var resultSet = _gamesContainer.GetItemQueryIterator<NflGameDocument>(query, requestOptions: requestOptions);
+            while (resultSet.HasMoreResults)
+            {
+                FeedResponse<NflGameDocument> response = await resultSet.ReadNextAsync();
+                foreach (var oldGame in response)
+                {
                     if ((oldGame.HadStatsPulled && oldGame.Status.Complete) || oldGame.Status.StartDate > DateTime.Now)
                     {
                         logger.LogInformation("Game stats for {Year} - Week {Week}: {Away} @ {Home} have already been pulled.", year, week, oldGame.AwayTeam.ShortName, oldGame.HomeTeam.ShortName);
@@ -87,9 +83,20 @@ namespace GoolsDev.Functions.FantasyFootball
                     {
                         logger.LogError("Stats service call failed with status code {Code}", result.Error.HttpStatusCode);
                     }
-                    await Task.Delay(1000);
+                    await Task.Delay(500);
 
-                    var stats = result.Data.Teams.SelectMany(t => t.Players.Select(p => _mapper.Map(p, $"{newGame.WeekId}.{p.PlayerId}", newGame.Year, t.TeamId, t.ShortName)));
+                    var stats = result.Data.Teams.SelectMany(t => t.Players
+                        .Select(player =>
+                        {
+                            return _mapper.Map(
+                                player: player,
+                                id: $"{newGame.WeekId}.{player.PlayerId}",
+                                year: newGame.Year,
+                                teamId: t.TeamId,
+                                teamShortName: t.ShortName,
+                                fantasyPoints: CalculateFantasyPoints(player));
+                        }));
+
                     foreach (var statline in stats)
                     {
                         await _statsContainer.UpsertItemAsync(statline, new PartitionKey(statline.Year));
@@ -98,7 +105,20 @@ namespace GoolsDev.Functions.FantasyFootball
                     await batch.ExecuteAsync();
                 }
             }
-
         }
+
+        private double CalculateFantasyPoints(NflBoxscorePlayer player) => Math.Round(
+            digits: 2,
+            value: (player.PassingYards * 0.04) +
+                (player.PassingTouchdowns * 4) +
+                (player.Interceptions * -2) +
+                (player.RushingYards * 0.1) +
+                (player.RushingTouchdowns * 6) +
+                (player.Receptions * 0.5) +
+                (player.ReceivingYards * 0.1) +
+                (player.ReceivingTouchdowns * 6) +
+                (player.FumblesLost * -2) +
+                (player.ReturnTouchdowns * 6)
+            );
     }
 }
