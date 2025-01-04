@@ -340,3 +340,11 @@ ASALocalRun/
 healthchecksdb
 /nuget.config
 /local.settings.json
+/Properties/serviceDependencies.local.json
+/Properties/serviceDependencies.func-goolsdev-ff - Zip Deploy.json
+/Properties/serviceDependencies.func-goolsdev-ff - Zip Deploy1.json
+/Properties/ServiceDependencies/func-goolsdev-ff - Zip Deploy/appInsights1.arm.json
+/Properties/ServiceDependencies/func-goolsdev-ff - Zip Deploy/profile.arm.json
+/Properties/ServiceDependencies/func-goolsdev-ff - Zip Deploy/storage1.arm.json
+/Properties/ServiceDependencies/func-goolsdev-ff - Zip Deploy1/appInsights1.arm.json
+/Properties/ServiceDependencies/func-goolsdev-ff - Zip Deploy1/storage1.arm.json
