@@ -27,10 +27,12 @@ namespace GoolsDev.Functions.FantasyFootball
 
     public record NflGameTeam(
         string TeamId,
-        string ShortName,
         string Location,
+        string Nickname,
+        string ShortName,
+        string Color,
+        string AlternateColor,
         bool IsActive,
-        string Mascot,
         double Score,
         NflRecord Record
     );

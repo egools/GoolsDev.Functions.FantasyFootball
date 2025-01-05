@@ -1,5 +1,5 @@
-﻿using GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor;
-using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
+﻿using EspnDataService;
+using GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor;
 using System;
 using System.Collections.Generic;
 using System.Linq;

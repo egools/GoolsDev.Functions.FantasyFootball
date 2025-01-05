@@ -1,18 +1,14 @@
+using EspnDataService;
 using GoolsDev.Functions.FantasyFootball;
 using GoolsDev.Functions.FantasyFootball.Models.BigTenSurvivor;
 using GoolsDev.Functions.FantasyFootball.Services;
-using GoolsDev.Functions.FantasyFootball.Services.BigTenGameData;
 using GoolsDev.Functions.FantasyFootball.Services.GitHub;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using YahooFantasyService;
-using EspnDataService;
-using Microsoft.Azure.Cosmos.Fluent;
-using System.Net;
 using System;
-using Microsoft.Azure.Cosmos;
-using Azure.Identity;
+using YahooFantasyService;
 
 
 var host = new HostBuilder()
@@ -34,11 +30,6 @@ var host = new HostBuilder()
         {
             configuration.GetSection("YahooServiceSettings").Bind(settings);
         });
-        s.AddOptions<BigTenGameDataServiceSettings>()
-        .Configure<IConfiguration>((settings, configuration) =>
-        {
-            configuration.GetSection("GameData").Bind(settings);
-        });
 
         s.AddOptions<GitHubCommitHandlerSettings>()
         .Configure<IConfiguration>((settings, configuration) =>
@@ -47,7 +38,7 @@ var host = new HostBuilder()
         });
 
         s.AddSingleton<IYahooService, YahooService>()
-        .AddSingleton<IEspnService, EspnService>()
+        .AddSingleton<IEspnNflService, EspnNflService>()
         .AddSingleton<IGoogleSheetsService, GoogleSheetsService>()
         .AddSingleton<IBigTenGameDataService, BigTenGameDataService>()
         .AddSingleton<IGitHubCommitHandler, GitHubCommitHandler>()

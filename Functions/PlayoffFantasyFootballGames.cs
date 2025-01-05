@@ -9,18 +9,20 @@ namespace GoolsDev.Functions.FantasyFootball
 {
     public class PlayoffFantasyFootballGames
     {
-        private readonly IEspnService _espnService;
+        private readonly IEspnNflService _espnService;
         private readonly CosmosClient _cosmosClient;
         private readonly Container _gamesContainer;
+        private readonly Container _statsContainer;
         private PlayoffFantasyFootballMapper _mapper;
 
         public PlayoffFantasyFootballGames(
-            IEspnService espnService,
+            IEspnNflService espnService,
             CosmosClient cosmosClient)
         {
             _espnService = espnService;
             _cosmosClient = cosmosClient;
             _gamesContainer = _cosmosClient.GetContainer("cosmos-bmgc-goolsdev", "nfl-games");
+            _statsContainer = _cosmosClient.GetContainer("cosmos-bmgc-goolsdev", "nfl-player-stats");
             _mapper = new PlayoffFantasyFootballMapper();
         }
 
@@ -51,6 +53,22 @@ namespace GoolsDev.Functions.FantasyFootball
             {
                 var gameDoc = _mapper.Map(game, false);
                 await _gamesContainer.UpsertItemAsync(gameDoc, new PartitionKey(gameDoc.WeekId));
+
+                //get teams rosters
+                var homeTeamResult = await _espnService.GetNflRoster(game.HomeTeam.TeamId);
+                var awayTeamResult = await _espnService.GetNflRoster(game.AwayTeam.TeamId);
+
+                var homeTeam = homeTeamResult.Data;
+                var awayTeam = homeTeamResult.Data;
+                foreach(var player in homeTeam.Players)
+                {
+                    var playerDoc = _mapper.Map(
+                        player: player,
+                        id: $"{year}.{player.PlayerId}",
+                        year: year,
+                        teamId: homeTeam.Team.TeamId,
+                        teamShortName: homeTeam.Team.ShortName);
+                }
             }
         }
     }

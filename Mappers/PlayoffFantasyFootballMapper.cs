@@ -12,6 +12,20 @@ namespace GoolsDev.Functions.FantasyFootball
         public partial NflGameDocument Map(NflGame nflGame, bool hadStatsPulled);
         private static string MapWeekId(NflGame nflGame) => $"{nflGame.Year}.{(int)nflGame.SeasonType}.{nflGame.Week}";
 
-        public partial NflPlayerStatsDocument Map(NflBoxscorePlayer player, string id, int year, string teamId, string teamShortName, double fantasyPoints);
+        [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.JerseyNumber))]
+        [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.PositionId))]
+        [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.Position))]
+        [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.Statlines))]
+        [MapperIgnoreSource(nameof(NflBoxscorePlayer.Statline))]
+        public partial NflPlayerStatsDocument Map(NflBoxscorePlayer player, string id, int year, string teamId, string teamShortName);
+
+
+        [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.Statlines))]
+        public partial NflPlayerStatsDocument Map(NflRosterPlayer player, string id, int year, string teamId, string teamShortName);
+
+
+        [MapperIgnoreTarget(nameof(NflPlayerStatline.FantasyPoints))]
+        public partial NflPlayerStatline Map(Statline stats);
+
     }
 }

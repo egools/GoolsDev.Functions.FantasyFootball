@@ -4,20 +4,21 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
     public class PlayoffFantasyFootbalPlayerStats
     {
-        private readonly IEspnService _espnService;
+        private readonly IEspnNflService _espnService;
         private readonly CosmosClient _cosmosClient;
         private readonly Container _gamesContainer;
         private readonly Container _statsContainer;
         private PlayoffFantasyFootballMapper _mapper;
 
         public PlayoffFantasyFootbalPlayerStats(
-            IEspnService espnService,
+            IEspnNflService espnService,
             CosmosClient cosmosClient)
         {
             _espnService = espnService;
@@ -88,13 +89,13 @@ namespace GoolsDev.Functions.FantasyFootball
                     var stats = result.Data.Teams.SelectMany(t => t.Players
                         .Select(player =>
                         {
+                            var stats = _mapper.Map(player.Statline);
                             return _mapper.Map(
                                 player: player,
                                 id: $"{newGame.WeekId}.{player.PlayerId}",
                                 year: newGame.Year,
                                 teamId: t.TeamId,
-                                teamShortName: t.ShortName,
-                                fantasyPoints: CalculateFantasyPoints(player));
+                                teamShortName: t.ShortName);
                         }));
 
                     foreach (var statline in stats)
@@ -109,16 +110,16 @@ namespace GoolsDev.Functions.FantasyFootball
 
         private double CalculateFantasyPoints(NflBoxscorePlayer player) => Math.Round(
             digits: 2,
-            value: (player.PassingYards * 0.04) +
-                (player.PassingTouchdowns * 4) +
-                (player.Interceptions * -2) +
-                (player.RushingYards * 0.1) +
-                (player.RushingTouchdowns * 6) +
-                (player.Receptions * 0.5) +
-                (player.ReceivingYards * 0.1) +
-                (player.ReceivingTouchdowns * 6) +
-                (player.FumblesLost * -2) +
-                (player.ReturnTouchdowns * 6)
+            value: (player.Statline.PassingYards * 0.04) +
+                (player.Statline.PassingTouchdowns * 4) +
+                (player.Statline.Interceptions * -2) +
+                (player.Statline.RushingYards * 0.1) +
+                (player.Statline.RushingTouchdowns * 6) +
+                (player.Statline.Receptions * 0.5) +
+                (player.Statline.ReceivingYards * 0.1) +
+                (player.Statline.ReceivingTouchdowns * 6) +
+                (player.Statline.FumblesLost * -2) +
+                (player.Statline.ReturnTouchdowns * 6)
             );
     }
 }

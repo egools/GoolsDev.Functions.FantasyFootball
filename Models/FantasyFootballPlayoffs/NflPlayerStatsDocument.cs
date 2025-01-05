@@ -1,13 +1,25 @@
-﻿namespace GoolsDev.Functions.FantasyFootball
+﻿using System.Collections.Generic;
+
+namespace GoolsDev.Functions.FantasyFootball
 {
     public record NflPlayerStatsDocument(
         string Id,
+        string PlayerId,
         string Year,
         string TeamId,
         string TeamShortName,
-        string PlayerId,
         string FirstName,
-        string LastName,
+        string LastName
+    )
+    {
+        public string JerseyNumber { get; set; }
+        public string PositionId { get; set; }
+        public string Position { get; set; }
+        public List<NflPlayerStatline> Statlines { get; set; }
+    };
+
+    public record NflPlayerStatline
+    (
         int PassingYards,
         int PassingTouchdowns,
         int Interceptions,
@@ -17,7 +29,9 @@
         int ReceivingYards,
         int ReceivingTouchdowns,
         int ReturnTouchdowns,
-        int FumblesLost,
-        double FantasyPoints
-    );
+        int FumblesLost
+    )
+    {
+        public double FantasyPoints { get; set; }
+    };
 }
