@@ -12,7 +12,7 @@ using YahooFantasyService;
 
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWorkerDefaults()
+    .ConfigureFunctionsWebApplication()
     .ConfigureServices(s =>
     {
         s.AddOptions<BigTenSurvivorSettings>()

@@ -32,7 +32,7 @@ namespace GoolsDev.Functions.FantasyFootball
         int FumblesLost
     )
     {
-        public int Week { get; set; }
+        public int Week { get; set; } //99 = total for season type
         public int SeasonType { get; set; }
         public double FantasyPoints { get; set; }
     };
