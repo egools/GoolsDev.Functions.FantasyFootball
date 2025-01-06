@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
@@ -34,6 +33,7 @@ namespace GoolsDev.Functions.FantasyFootball
         string AlternateColor,
         bool IsActive,
         double Score,
+        bool Winner,
         NflRecord Record
     );
 

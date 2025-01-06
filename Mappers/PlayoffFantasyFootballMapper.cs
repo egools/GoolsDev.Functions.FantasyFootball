@@ -1,6 +1,5 @@
 ﻿using EspnDataService;
 using Riok.Mapperly.Abstractions;
-using System;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
@@ -8,9 +7,9 @@ namespace GoolsDev.Functions.FantasyFootball
     public partial class PlayoffFantasyFootballMapper
     {
         [MapProperty(nameof(NflGame.GameId), nameof(NflGameDocument.Id))]
-        [MapPropertyFromSource(nameof(NflGameDocument.WeekId), Use = nameof(MapWeekId))]
+        [MapPropertyFromSource(nameof(NflGameDocument.WeekId), Use = nameof(CreateWeekIdFromGame))]
         public partial NflGameDocument Map(NflGame nflGame, bool hadStatsPulled);
-        private static string MapWeekId(NflGame nflGame) => $"{nflGame.Year}.{(int)nflGame.SeasonType}.{nflGame.Week}";
+        public string CreateWeekIdFromGame(NflGame nflGame) => Helpers.CreateWeekId(nflGame.Year, (int)nflGame.SeasonType, nflGame.Week);
 
         [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.JerseyNumber))]
         [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.PositionId))]
@@ -19,13 +18,13 @@ namespace GoolsDev.Functions.FantasyFootball
         [MapperIgnoreSource(nameof(NflBoxscorePlayer.Statline))]
         public partial NflPlayerStatsDocument Map(NflBoxscorePlayer player, string id, int year, string teamId, string teamShortName);
 
-
         [MapperIgnoreTarget(nameof(NflPlayerStatsDocument.Statlines))]
         public partial NflPlayerStatsDocument Map(NflRosterPlayer player, string id, int year, string teamId, string teamShortName);
 
+        [MapPropertyFromSource(nameof(NflPlayerStatline.FantasyPoints), Use = nameof(CalculateFantasyPoints))]
+        public partial NflPlayerStatline Map(Statline stats, int week, int seasonType);
 
-        [MapperIgnoreTarget(nameof(NflPlayerStatline.FantasyPoints))]
-        public partial NflPlayerStatline Map(Statline stats);
+        public double CalculateFantasyPoints(Statline stats) => Helpers.CalculateFantasyPoints(stats);
 
     }
 }
