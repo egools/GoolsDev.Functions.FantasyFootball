@@ -13,35 +13,37 @@ using YahooFantasyService;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
-    .ConfigureServices(s =>
+    .ConfigureServices(services =>
     {
-        s.AddOptions<BigTenSurvivorSettings>()
+        services.AddOptions<BigTenSurvivorSettings>()
         .Configure<IConfiguration>((settings, configuration) =>
         {
             configuration.GetSection("BigTenSurvivorSettings").Bind(settings);
         });
-        s.AddOptions<GoogleSheetsServiceSettings>()
+        services.AddOptions<GoogleSheetsServiceSettings>()
         .Configure<IConfiguration>((settings, configuration) =>
         {
             configuration.GetSection("GoogleSheetsSettings").Bind(settings);
         });
-        s.AddOptions<YahooServiceSettings>()
+        services.AddOptions<YahooServiceSettings>()
         .Configure<IConfiguration>((settings, configuration) =>
         {
             configuration.GetSection("YahooServiceSettings").Bind(settings);
         });
 
-        s.AddOptions<GitHubCommitHandlerSettings>()
+        services.AddOptions<GitHubCommitHandlerSettings>()
         .Configure<IConfiguration>((settings, configuration) =>
         {
             configuration.GetSection("GitHubSettings").Bind(settings);
         });
 
-        s.AddSingleton<IYahooService, YahooService>()
+        services.AddSingleton<IYahooService, YahooService>()
         .AddSingleton<IEspnNflService, EspnNflService>()
         .AddSingleton<IGoogleSheetsService, GoogleSheetsService>()
         .AddSingleton<IBigTenGameDataService, BigTenGameDataService>()
         .AddSingleton<IGitHubCommitHandler, GitHubCommitHandler>()
+        .AddSingleton<ICosmosGames, CosmosGames>()
+        .AddSingleton<ICosmosPlayerStats, CosmosPlayerStats>()
         .AddSingleton(s =>
         {
             var endpoint = Environment.GetEnvironmentVariable("CosmosDbEndPoint");

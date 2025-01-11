@@ -1,4 +1,5 @@
 using EspnDataService;
+using GoolsDev.Functions.FantasyFootball.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
@@ -13,15 +14,15 @@ namespace GoolsDev.Functions.FantasyFootball.Functions
     public class UpdatePlayerSeasonStats
     {
         private readonly IEspnNflService _espnService;
-        private readonly Container _statsContainer;
+        private readonly ICosmosPlayerStats _cosmosPlayerStats;
         private PlayoffFantasyFootballMapper _mapper;
 
         public UpdatePlayerSeasonStats(
             IEspnNflService espnService,
+            ICosmosPlayerStats cosmosPlayerStats,
             CosmosClient cosmosClient)
         {
             _espnService = espnService;
-            _statsContainer = cosmosClient.GetContainer("cosmos-bmgc-goolsdev", "nfl-player-stats");
             _mapper = new PlayoffFantasyFootballMapper();
         }
 
@@ -32,22 +33,7 @@ namespace GoolsDev.Functions.FantasyFootball.Functions
         {
             var logger = context.GetLogger(nameof(UpdatePlayerSeasonStats));
 
-            var query = new QueryDefinition("select * from games g where g.year = @Year")
-                .WithParameter("@Year", year);
-            var requestOptions = new QueryRequestOptions()
-            {
-                PartitionKey = new PartitionKey(year),
-                MaxItemCount = 16
-            };
-
-            using var resultSet = _statsContainer.GetItemQueryIterator<NflPlayerStatsDocument>(query, requestOptions: requestOptions);
-            var players = new List<NflPlayerStatsDocument>();
-            while (resultSet.HasMoreResults)
-            {
-                FeedResponse<NflPlayerStatsDocument> response = await resultSet.ReadNextAsync();
-                players.AddRange(response.ToList());
-            }
-
+            var players = await _cosmosPlayerStats.GetAllPlayers(year);
             foreach (var playerDoc in players)
             {
                 if (playerDoc.Statlines.Any(s => s.Week == 99))
@@ -59,12 +45,8 @@ namespace GoolsDev.Functions.FantasyFootball.Functions
                 if (statsResult.Success)
                 {
                     var statline = _mapper.Map(statsResult.Data, 99, 2);
-                    playerDoc.Statlines.Clear();
                     playerDoc.Statlines.Add(statline);
-                    await _statsContainer.PatchItemAsync<NflPlayerStatsDocument>(
-                        playerDoc.Id,
-                        new PartitionKey(year),
-                        patchOperations: [PatchOperation.Set($"/statlines", playerDoc.Statlines)]);
+                    await _cosmosPlayerStats.PatchStatlines(playerDoc.Id, year, playerDoc.Statlines);
                 }
                 await Task.Delay(200);
             }

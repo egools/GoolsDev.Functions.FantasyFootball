@@ -1,4 +1,5 @@
 using EspnDataService;
+using GoolsDev.Functions.FantasyFootball.Services;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -12,17 +13,18 @@ namespace GoolsDev.Functions.FantasyFootball
     public class PlayoffFantasyFootbalPlayerStats
     {
         private readonly IEspnNflService _espnService;
-        private readonly Container _gamesContainer;
-        private readonly Container _statsContainer;
+        private readonly ICosmosGames _cosmosGames;
+        private readonly ICosmosPlayerStats _cosmosPlayerStats;
         private PlayoffFantasyFootballMapper _mapper;
 
         public PlayoffFantasyFootbalPlayerStats(
             IEspnNflService espnService,
-            CosmosClient cosmosClient)
+            ICosmosGames cosmosGames,
+            ICosmosPlayerStats cosmosPlayerStats)
         {
             _espnService = espnService;
-            _gamesContainer = cosmosClient.GetContainer("cosmos-bmgc-goolsdev", "nfl-games");
-            _statsContainer = cosmosClient.GetContainer("cosmos-bmgc-goolsdev", "nfl-player-stats");
+            _cosmosGames = cosmosGames;
+            _cosmosPlayerStats = cosmosPlayerStats;
             _mapper = new PlayoffFantasyFootballMapper();
         }
 
@@ -49,108 +51,82 @@ namespace GoolsDev.Functions.FantasyFootball
                 return;
             }
 
-            var weekId = Helpers.CreateWeekId(year, 3, week);
-            var query = new QueryDefinition(
-                "select * from games g where g.weekId = @WeekId")
-                .WithParameter("@WeekId", weekId);
-            var requestOptions = new QueryRequestOptions()
+            var oldGames = await _cosmosGames.GetGames(year, 3, week);
+            foreach (var oldGame in oldGames)
             {
-                PartitionKey = new PartitionKey(weekId),
-                MaxItemCount = 16
-            };
-
-            using var resultSet = _gamesContainer.GetItemQueryIterator<NflGameDocument>(query, requestOptions: requestOptions);
-            while (resultSet.HasMoreResults)
-            {
-                var response = await resultSet.ReadNextAsync();
-                foreach (var oldGame in response)
+                if (oldGame.HadStatsPulled && oldGame.Status.Complete)
                 {
-                    if ((oldGame.HadStatsPulled && oldGame.Status.Complete) || oldGame.Status.StartDate > DateTime.Now)
-                    {
-                        logger.LogInformation("Game stats for {Year} - Week {Week}: {Away} @ {Home} have already been pulled.", year, week, oldGame.AwayTeam.ShortName, oldGame.HomeTeam.ShortName);
-                        continue;
-                    }
+                    logger.LogInformation("Game stats for {Year} - Week {Week}: {Away} @ {Home} have already been pulled.", year, week, oldGame.AwayTeam.ShortName, oldGame.HomeTeam.ShortName);
+                    continue;
+                }
+                else if (oldGame.Status.StartDate > DateTime.Now)
+                {
+                    logger.LogInformation("Game: {Year} - Week {Week}: {Away} @ {Home} has not yet started.", year, week, oldGame.AwayTeam.ShortName, oldGame.HomeTeam.ShortName);
+                    continue;
+                }
 
-                    var gameData = gameResult.Data.FirstOrDefault(g => g.GameId == oldGame.Id);
-                    var newGame = _mapper.Map(gameData, gameData.Status.Complete);
-                    var gameBatch = _gamesContainer.CreateTransactionalBatch(new PartitionKey(newGame.WeekId));
-                    gameBatch.UpsertItem(newGame);
+                var gameData = gameResult.Data.FirstOrDefault(g => g.GameId == oldGame.Id);
+                var newGame = _mapper.Map(gameData, gameData.Status.Complete);
 
-                    logger.LogInformation("Fetching playoff game stats for {Year} - Week {Week}: {Away} @ {Home}", year, week, newGame.AwayTeam.ShortName, newGame.HomeTeam.ShortName);
-                    var result = await _espnService.GetNflGamePlayerStats(newGame.Id);
-                    if (!result.Success)
-                    {
-                        logger.LogError("Stats service call failed with status code {Code}", result.Error.HttpStatusCode);
-                        continue;
-                    }
-                    await Task.Delay(500);
+                logger.LogInformation("Fetching playoff game stats for {Year} - Week {Week}: {Away} @ {Home}", year, week, newGame.AwayTeam.ShortName, newGame.HomeTeam.ShortName);
+                var result = await _espnService.GetNflGamePlayerStats(newGame.Id);
+                if (!result.Success)
+                {
+                    logger.LogError("Stats service call failed with status code {Code}", result.Error.HttpStatusCode);
+                    continue;
+                }
+                await Task.Delay(500);
 
-                    var statsBatch = _statsContainer.CreateTransactionalBatch(new PartitionKey(year));
-                    var existingPlayers = await GetGamePlayerDocs(newGame.HomeTeam.TeamId, newGame.AwayTeam.TeamId, newGame.Year);
-                    foreach (var team in result.Data.Teams)
+                _cosmosPlayerStats.CreateBatch(year);
+                var existingPlayers = await _cosmosPlayerStats.GetGamePlayerDocs(newGame.HomeTeam.TeamId, newGame.AwayTeam.TeamId, newGame.Year);
+                foreach (var team in result.Data.Teams)
+                {
+                    foreach (var player in team.Players)
                     {
-                        foreach (var player in team.Players)
+                        var newStats = _mapper.Map(player.Statline, newGame.Week, (int)newGame.SeasonType);
+                        var playerDoc = existingPlayers.FirstOrDefault(p => p.PlayerId == player.PlayerId);
+                        if (playerDoc == null)
                         {
-                            var playerDoc = existingPlayers.FirstOrDefault(p => p.PlayerId == player.PlayerId);
-                            var stats = _mapper.Map(player.Statline, newGame.Week, (int)newGame.SeasonType);
-                            if (playerDoc == null)
+                            var playerResult = await _espnService.GetNflPlayer(player.PlayerId);
+                            if (!playerResult.Success)
                             {
-                                var playerResult = await _espnService.GetNflPlayer(player.PlayerId);
-                                if (!playerResult.Success)
-                                {
-                                    logger.LogError("Error fetching player info for {FirstName} {LastName} ID:{PlayerId}", player.FirstName, player.LastName, player.PlayerId);
-                                }
+                                logger.LogError("Error fetching player info for {FirstName} {LastName} ID:{PlayerId}", player.FirstName, player.LastName, player.PlayerId);
+                            }
 
-                                playerDoc = _mapper.Map(
-                                    player: player,
-                                    id: Helpers.CreatePlayerId(player.PlayerId, team.TeamId, newGame.Year),
-                                    year: newGame.Year,
-                                    teamId: team.TeamId,
-                                    teamShortName: team.ShortName);
-                                playerDoc.JerseyNumber = playerResult.Data?.JerseyNumber;
-                                playerDoc.PositionId = playerResult.Data?.PositionId;
-                                playerDoc.Position = playerResult.Data?.Position;
-                                playerDoc.Statlines.Add(stats);
-                                statsBatch.UpsertItem(playerDoc);
-                            }
-                            else
+                            playerDoc = _mapper.Map(
+                                player: player,
+                                id: Helpers.CreatePlayerId(player.PlayerId, team.TeamId, newGame.Year),
+                                year: newGame.Year,
+                                teamId: team.TeamId,
+                                teamShortName: team.ShortName);
+                            playerDoc.JerseyNumber = playerResult.Data?.JerseyNumber;
+                            playerDoc.PositionId = playerResult.Data?.PositionId;
+                            playerDoc.Position = playerResult.Data?.Position;
+                            playerDoc.Statlines.Add(newStats);
+                            _cosmosPlayerStats.AddPlayerToBatch(playerDoc);
+                        }
+                        else
+                        {
+                            var oldStats = playerDoc.Statlines.FirstOrDefault(s => s.Week == week && s.SeasonType == (int)newGame.SeasonType);
+                            if (oldStats is not null)
                             {
-                                statsBatch.PatchItem(
-                                    playerDoc.Id,
-                                    patchOperations: [PatchOperation.Add($"/statlines/-", stats)]
-                                );
+                                playerDoc.Statlines.Remove(oldStats);
                             }
+                            playerDoc.Statlines.Add(newStats);
+                            _cosmosPlayerStats.PatchStatlinesInBatch(playerDoc.Id, playerDoc.Statlines);
                         }
                     }
-                    var batchResult = await statsBatch.ExecuteAsync();
-                    if (batchResult.IsSuccessStatusCode)
-                    {
-                        await gameBatch.ExecuteAsync();
-                    }
+                }
+                var batchSuccessful = await _cosmosPlayerStats.ExecuteBatch();
+                if (batchSuccessful)
+                {
+                    await _cosmosGames.UpsertGame(newGame);
+                }
+                else
+                {
+                    logger.LogError("Player transaction batch for {Away} @ {Home} failed.", newGame.AwayTeam.ShortName, newGame.HomeTeam.ShortName);
                 }
             }
-        }
-
-        private async Task<List<NflPlayerStatsDocument>> GetGamePlayerDocs(string teamId1, string teamId2, int year)
-        {
-            var query = new QueryDefinition("select * from games g where g.year = @Year and (g.teamId = @TeamId1 OR g.teamId = @TeamId2)")
-                .WithParameter("@Year", year)
-                .WithParameter("@TeamId1", teamId1)
-                .WithParameter("@TeamId2", teamId2);
-            var requestOptions = new QueryRequestOptions()
-            {
-                PartitionKey = new PartitionKey(year),
-                MaxItemCount = 16
-            };
-
-            using var resultSet = _statsContainer.GetItemQueryIterator<NflPlayerStatsDocument>(query, requestOptions: requestOptions);
-            var players = new List<NflPlayerStatsDocument>();
-            while (resultSet.HasMoreResults)
-            {
-                FeedResponse<NflPlayerStatsDocument> response = await resultSet.ReadNextAsync();
-                players.AddRange(response.ToList());
-            }
-            return players;
         }
     }
 }

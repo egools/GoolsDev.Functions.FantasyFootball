@@ -4,6 +4,9 @@ namespace GoolsDev.Functions.FantasyFootball
 {
     public static class NflDateHelper
     {
+        private const long sb2022Start = 638120267400000000;    //2023-02-08T08:00Z
+        private const long sb2022End = 638120267400000000;      //2023-02-15T07:59Z
+
         private const long wc2023Start = 638404344000000000;    //2024-01-10T03:00Z
         private const long wc2023End = 638410391400000000;      //2024-01-17T02:59Z
         private const long div2023Start = 638410392000000000;   //2024-01-17T03:00Z
@@ -24,6 +27,8 @@ namespace GoolsDev.Functions.FantasyFootball
 
         public static (int week, int year) GetPostSeasonWeek(DateTime date) => date.Ticks switch
         {
+            < sb2022Start => (3, 2022),
+            >= sb2022Start and <= sb2022End => (5, 2022),
             >= wc2023Start and <= wc2023End => (1, 2023),
             >= div2023Start and <= div2023End => (2, 2023),
             >= conf2023Start and <= conf2023End => (3, 2023),

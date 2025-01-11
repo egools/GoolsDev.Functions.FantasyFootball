@@ -1,5 +1,5 @@
 using EspnDataService;
-using Microsoft.Azure.Cosmos;
+using GoolsDev.Functions.FantasyFootball.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,17 +12,18 @@ namespace GoolsDev.Functions.FantasyFootball
     public class PlayoffFantasyFootballGames
     {
         private readonly IEspnNflService _espnService;
-        private readonly Container _gamesContainer;
-        private readonly Container _statsContainer;
+        private readonly ICosmosGames _cosmosGames;
+        private readonly ICosmosPlayerStats _cosmosPlayerStats;
         private PlayoffFantasyFootballMapper _mapper;
 
         public PlayoffFantasyFootballGames(
             IEspnNflService espnService,
-            CosmosClient cosmosClient)
+            ICosmosGames cosmosGames,
+            ICosmosPlayerStats cosmosPlayerStats)
         {
             _espnService = espnService;
-            _gamesContainer = cosmosClient.GetContainer("cosmos-bmgc-goolsdev", "nfl-games");
-            _statsContainer = cosmosClient.GetContainer("cosmos-bmgc-goolsdev", "nfl-player-stats");
+            _cosmosGames = cosmosGames;
+            _cosmosPlayerStats = cosmosPlayerStats;
             _mapper = new PlayoffFantasyFootballMapper();
         }
 
@@ -53,9 +54,9 @@ namespace GoolsDev.Functions.FantasyFootball
             foreach (var game in result.Data)
             {
                 var gameDoc = _mapper.Map(game, false);
-                await _gamesContainer.UpsertItemAsync(gameDoc, new PartitionKey(gameDoc.WeekId));
+                await _cosmosGames.UpsertGame(gameDoc);
 
-                var existingPlayers = await GetGamePlayerDocs(gameDoc.HomeTeam.TeamId, gameDoc.AwayTeam.TeamId, year);
+                var existingPlayers = await _cosmosPlayerStats.GetGamePlayerDocs(gameDoc.HomeTeam.TeamId, gameDoc.AwayTeam.TeamId, year);
                 var missingPlayers = new List<NflPlayerStatsDocument>();
                 async Task GetMissingPlayers(NflGameTeam team)
                 {
@@ -81,30 +82,8 @@ namespace GoolsDev.Functions.FantasyFootball
                     GetMissingPlayers(gameDoc.AwayTeam)
                 ]);
 
-                await Task.WhenAll(missingPlayers.Select(p => _statsContainer.UpsertItemAsync(p)));
+                await Task.WhenAll(missingPlayers.Select(p => _cosmosPlayerStats.UpsertPlayer(p)));
             }
-        }
-
-        private async Task<List<NflPlayerStatsDocument>> GetGamePlayerDocs(string teamId1, string teamId2, int year)
-        {
-            var query = new QueryDefinition("select * from games g where g.year = @Year and (g.teamId = @TeamId1 OR g.teamId = @TeamId2)")
-                .WithParameter("@Year", year)
-                .WithParameter("@TeamId1", teamId1)
-                .WithParameter("@TeamId2", teamId2);
-            var requestOptions = new QueryRequestOptions()
-            {
-                PartitionKey = new PartitionKey(year),
-                MaxItemCount = 16
-            };
-
-            using var resultSet = _statsContainer.GetItemQueryIterator<NflPlayerStatsDocument>(query, requestOptions: requestOptions);
-            var players = new List<NflPlayerStatsDocument>();
-            while (resultSet.HasMoreResults)
-            {
-                FeedResponse<NflPlayerStatsDocument> response = await resultSet.ReadNextAsync();
-                players.AddRange(response.ToList());
-            }
-            return players;
         }
     }
 }
