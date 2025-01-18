@@ -44,6 +44,7 @@ var host = new HostBuilder()
         .AddSingleton<IGitHubCommitHandler, GitHubCommitHandler>()
         .AddSingleton<ICosmosGames, CosmosGames>()
         .AddSingleton<ICosmosPlayerStats, CosmosPlayerStats>()
+        .AddSingleton<ICosmosFailedEspnCalls, CosmosFailedEspnCalls>()
         .AddSingleton(s =>
         {
             var endpoint = Environment.GetEnvironmentVariable("CosmosDbEndPoint");
