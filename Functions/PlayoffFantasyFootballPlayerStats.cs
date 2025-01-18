@@ -1,10 +1,9 @@
 using EspnDataService;
 using GoolsDev.Functions.FantasyFootball.Services;
-using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,16 +14,19 @@ namespace GoolsDev.Functions.FantasyFootball
         private readonly IEspnNflService _espnService;
         private readonly ICosmosGames _cosmosGames;
         private readonly ICosmosPlayerStats _cosmosPlayerStats;
+        private readonly ICosmosFailedEspnCalls _failedCalls;
         private PlayoffFantasyFootballMapper _mapper;
 
         public PlayoffFantasyFootbalPlayerStats(
             IEspnNflService espnService,
             ICosmosGames cosmosGames,
-            ICosmosPlayerStats cosmosPlayerStats)
+            ICosmosPlayerStats cosmosPlayerStats,
+            ICosmosFailedEspnCalls failedCalls)
         {
             _espnService = espnService;
             _cosmosGames = cosmosGames;
             _cosmosPlayerStats = cosmosPlayerStats;
+            _failedCalls = failedCalls;
             _mapper = new PlayoffFantasyFootballMapper();
         }
 
@@ -47,7 +49,19 @@ namespace GoolsDev.Functions.FantasyFootball
             var gameResult = await _espnService.GetNflPostSeasonGames(year, week);
             if (!gameResult.Success)
             {
-                logger.LogError("Games service call failed with status code {Code}", gameResult.Error.HttpStatusCode);
+                if (gameResult.Error.ApiResponse != null)
+                {
+                    logger.LogError(gameResult.Error.Exception, gameResult.Error.Message);
+                    await _failedCalls.LogFailedCall(new FailedEspnCallDocument(
+                        Guid.NewGuid(),
+                        $"{year}.3.{week}",
+                        new { year, week },
+                        gameResult.Error.ApiResponse));
+                }
+                else
+                {
+                    logger.LogError("Games service call failed with status code {Code}", gameResult.Error.HttpStatusCode);
+                }
                 return;
             }
 
@@ -72,7 +86,19 @@ namespace GoolsDev.Functions.FantasyFootball
                 var result = await _espnService.GetNflGamePlayerStats(newGame.Id);
                 if (!result.Success)
                 {
-                    logger.LogError("Stats service call failed with status code {Code}", result.Error.HttpStatusCode);
+                    if (result.Error.ApiResponse != null)
+                    {
+                        logger.LogError(result.Error.Exception, result.Error.Message);
+                        await _failedCalls.LogFailedCall(new FailedEspnCallDocument(
+                            Guid.NewGuid(),
+                            newGame.Id,
+                            new { year, week, gameId = newGame.Id },
+                            result.Error.ApiResponse));
+                    }
+                    else
+                    {
+                        logger.LogError("Stats service call failed with status code {Code}", result.Error.HttpStatusCode);
+                    }
                     continue;
                 }
                 await Task.Delay(500);
@@ -90,7 +116,19 @@ namespace GoolsDev.Functions.FantasyFootball
                             var playerResult = await _espnService.GetNflPlayer(player.PlayerId);
                             if (!playerResult.Success)
                             {
-                                logger.LogError("Error fetching player info for {FirstName} {LastName} ID:{PlayerId}", player.FirstName, player.LastName, player.PlayerId);
+                                if (playerResult.Error.ApiResponse != null)
+                                {
+                                    logger.LogError(playerResult.Error.Exception, playerResult.Error.Message);
+                                    await _failedCalls.LogFailedCall(new FailedEspnCallDocument(
+                                        Guid.NewGuid(),
+                                        newGame.Id,
+                                        new { year, week, gameId = newGame.Id, playerId = player.PlayerId },
+                                        playerResult.Error.ApiResponse));
+                                }
+                                else
+                                {
+                                    logger.LogError("Error fetching player info for {FirstName} {LastName} ID:{PlayerId}", player.FirstName, player.LastName, player.PlayerId);
+                                }
                             }
 
                             playerDoc = _mapper.Map(

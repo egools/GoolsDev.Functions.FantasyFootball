@@ -14,17 +14,20 @@ namespace GoolsDev.Functions.FantasyFootball
         private readonly IEspnNflService _espnService;
         private readonly ICosmosGames _cosmosGames;
         private readonly ICosmosPlayerStats _cosmosPlayerStats;
+        private readonly ICosmosFailedEspnCalls _failedCalls;
         private PlayoffFantasyFootballMapper _mapper;
 
         public PlayoffFantasyFootballGames(
             IEspnNflService espnService,
             ICosmosGames cosmosGames,
-            ICosmosPlayerStats cosmosPlayerStats)
+            ICosmosPlayerStats cosmosPlayerStats,
+            ICosmosFailedEspnCalls failedCalls)
         {
             _espnService = espnService;
             _cosmosGames = cosmosGames;
             _cosmosPlayerStats = cosmosPlayerStats;
             _mapper = new PlayoffFantasyFootballMapper();
+            _failedCalls = failedCalls;
         }
 
         [Function(nameof(PlayoffFantasyFootballGames))]
@@ -47,7 +50,19 @@ namespace GoolsDev.Functions.FantasyFootball
             var result = await _espnService.GetNflPostSeasonGames(year, week);
             if (!result.Success)
             {
-                logger.LogError("Games service call failed with status code {Code}", result.Error.HttpStatusCode);
+                if (result.Error.ApiResponse != null)
+                {
+                    logger.LogError(result.Error.Exception, result.Error.Message);
+                    await _failedCalls.LogFailedCall(new FailedEspnCallDocument(
+                        Guid.NewGuid(),
+                        $"{year}.3.{week}",
+                        new { year, week },
+                        result.Error.ApiResponse));
+                }
+                else
+                {
+                    logger.LogError("Games service call failed with status code {Code}", result.Error.HttpStatusCode);
+                }
                 return;
             }
 

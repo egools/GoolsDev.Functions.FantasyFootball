@@ -6,18 +6,18 @@
 		<UserSecretsId>d3e8b28b-f70e-46fc-8e4f-442e62a0f20a</UserSecretsId>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Azure.Identity" Version="1.13.1" />
-		<PackageReference Include="EspnDataService" Version="0.4.1" />
+		<PackageReference Include="Azure.Identity" Version="1.13.2" />
+		<PackageReference Include="EspnDataService" Version="0.5.0" />
 		<PackageReference Include="Flurl.Http" Version="4.0.2" />
 		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
-		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.46.0" />
+		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.46.1" />
 		<PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.2.0" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.0.0" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.0" />
-		<PackageReference Include="Octokit" Version="13.0.1" />
+		<PackageReference Include="Octokit" Version="14.0.0" />
 		<PackageReference Include="Riok.Mapperly" Version="4.1.1" />
 		<PackageReference Include="YahooFantasyService" Version="1.1.0" />
 	</ItemGroup>
