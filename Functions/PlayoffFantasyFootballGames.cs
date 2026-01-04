@@ -66,7 +66,7 @@ namespace GoolsDev.Functions.FantasyFootball
                 return;
             }
 
-            foreach (var game in result.Data)
+            foreach (NflGame game in result.Data)
             {
                 var gameDoc = _mapper.Map(game, false);
                 await _cosmosGames.UpsertGame(gameDoc);

@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,6 +21,7 @@ namespace GoolsDev.Functions.FantasyFootball.Functions
             CosmosClient cosmosClient)
         {
             _espnService = espnService;
+            _cosmosPlayerStats = cosmosPlayerStats;
             _mapper = new PlayoffFantasyFootballMapper();
         }
 
