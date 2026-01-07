@@ -5,27 +5,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball.Functions
 {
-    public class UpdateCurrentPlayoffPlayers
+    public class UpdateCurrentPlayoffPlayers(
+        IEspnNflService espnService,
+        ICosmosPlayerStats cosmosPlayerStats)
     {
-        private readonly IEspnNflService _espnService;
-        private readonly ICosmosPlayerStats _cosmosPlayerStats;
-        private PlayoffFantasyFootballMapper _mapper;
-
-        public UpdateCurrentPlayoffPlayers(
-            IEspnNflService espnService,
-            ICosmosPlayerStats cosmosPlayerStats)
-        {
-            _espnService = espnService;
-            _cosmosPlayerStats = cosmosPlayerStats;
-            _mapper = new PlayoffFantasyFootballMapper();
-        }
+        private readonly IEspnNflService _espnService = espnService;
+        private readonly ICosmosPlayerStats _cosmosPlayerStats = cosmosPlayerStats;
+        private readonly PlayoffFantasyFootballMapper _mapper = new();
 
         [Function("UpdateCurrentPlayoffPlayers")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Admin, "post")]

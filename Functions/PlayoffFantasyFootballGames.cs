@@ -9,26 +9,17 @@ using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball
 {
-    public class PlayoffFantasyFootballGames
+    public class PlayoffFantasyFootballGames(
+        IEspnNflService espnService,
+        ICosmosGames cosmosGames,
+        ICosmosPlayerStats cosmosPlayerStats,
+        ICosmosFailedEspnCalls failedCalls)
     {
-        private readonly IEspnNflService _espnService;
-        private readonly ICosmosGames _cosmosGames;
-        private readonly ICosmosPlayerStats _cosmosPlayerStats;
-        private readonly ICosmosFailedEspnCalls _failedCalls;
-        private PlayoffFantasyFootballMapper _mapper;
-
-        public PlayoffFantasyFootballGames(
-            IEspnNflService espnService,
-            ICosmosGames cosmosGames,
-            ICosmosPlayerStats cosmosPlayerStats,
-            ICosmosFailedEspnCalls failedCalls)
-        {
-            _espnService = espnService;
-            _cosmosGames = cosmosGames;
-            _cosmosPlayerStats = cosmosPlayerStats;
-            _mapper = new PlayoffFantasyFootballMapper();
-            _failedCalls = failedCalls;
-        }
+        private readonly IEspnNflService _espnService = espnService;
+        private readonly ICosmosGames _cosmosGames = cosmosGames;
+        private readonly ICosmosPlayerStats _cosmosPlayerStats = cosmosPlayerStats;
+        private readonly ICosmosFailedEspnCalls _failedCalls = failedCalls;
+        private PlayoffFantasyFootballMapper _mapper = new();
 
         [Function(nameof(PlayoffFantasyFootballGames))]
         public async Task Run([TimerTrigger("%PlayoffFantasyFootbalGamesTimerSchedule%")] FunctionContext context)

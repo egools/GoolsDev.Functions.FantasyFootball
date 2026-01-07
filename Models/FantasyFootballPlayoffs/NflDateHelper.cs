@@ -25,6 +25,15 @@ namespace GoolsDev.Functions.FantasyFootball
         private const long sb2024Start = 638743032000000000;    //2025-02-05T03:00Z
         private const long sb2024End = 638749079400000000;      //2025-02-12T02:59Z
 
+        private const long wc2025Start = 639033336000000000;    //2026-01-07T03:00Z
+        private const long wc2025End = 639039383400000000;      //2026-01-14T02:59Z
+        private const long div2025Start = 639039384000000000;   //2026-01-14T03:00Z
+        private const long div2025End = 639045431400000000;     //2026-01-21T02:59Z
+        private const long conf2025Start = 639045432000000000;  //2026-01-21T03:00Z
+        private const long conf2025End = 639051479400000000;    //2026-01-28T02:59Z
+        private const long sb2025Start = 639054936000000000;    //2026-02-01T03:00Z
+        private const long sb2025End = 639062711400000000;      //2026-02-10T02:59Z
+
         public static (int week, int year) GetPostSeasonWeek(DateTime date) => date.Ticks switch
         {
             < sb2022Start => (3, 2022),
@@ -37,6 +46,10 @@ namespace GoolsDev.Functions.FantasyFootball
             >= div2024Start and <= div2024End => (2, 2024),
             >= conf2024Start and <= conf2024End => (3, 2024),
             >= sb2024Start and <= sb2024End => (5, 2024),
+            >= wc2025Start and <= wc2025End => (1, 2025),
+            >= div2025Start and <= div2025End => (2, 2025),
+            >= conf2025Start and <= conf2025End => (3, 2025),
+            >= sb2025Start and <= sb2025End => (5, 2025),
             _ => (-1, -1)
         };
     }

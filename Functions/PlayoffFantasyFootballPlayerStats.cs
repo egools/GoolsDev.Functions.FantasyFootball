@@ -1,6 +1,5 @@
 using EspnDataService;
 using GoolsDev.Functions.FantasyFootball.Services;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;

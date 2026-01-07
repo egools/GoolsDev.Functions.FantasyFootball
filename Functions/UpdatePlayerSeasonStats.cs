@@ -2,28 +2,19 @@ using EspnDataService;
 using GoolsDev.Functions.FantasyFootball.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace GoolsDev.Functions.FantasyFootball.Functions
 {
-    public class UpdatePlayerSeasonStats
+    public class UpdatePlayerSeasonStats(
+        IEspnNflService espnService,
+        ICosmosPlayerStats cosmosPlayerStats)
     {
-        private readonly IEspnNflService _espnService;
-        private readonly ICosmosPlayerStats _cosmosPlayerStats;
-        private PlayoffFantasyFootballMapper _mapper;
-
-        public UpdatePlayerSeasonStats(
-            IEspnNflService espnService,
-            ICosmosPlayerStats cosmosPlayerStats,
-            CosmosClient cosmosClient)
-        {
-            _espnService = espnService;
-            _cosmosPlayerStats = cosmosPlayerStats;
-            _mapper = new PlayoffFantasyFootballMapper();
-        }
+        private readonly IEspnNflService _espnService = espnService;
+        private readonly ICosmosPlayerStats _cosmosPlayerStats = cosmosPlayerStats;
+        private readonly PlayoffFantasyFootballMapper _mapper = new();
 
         [Function("UpdatePlayerSeasonStats")]
         public async Task<IActionResult> Run(
