@@ -34,6 +34,7 @@ namespace GoolsDev.Functions.FantasyFootball
         bool IsActive,
         double Score,
         bool Winner,
+        string GameStatus,
         NflRecord Record
     );
 
